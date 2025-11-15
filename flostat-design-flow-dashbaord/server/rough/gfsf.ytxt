@@ -1,0 +1,22 @@
+void sendScheduleAck(String scheduleId, String orgId, String deviceType) {
+  StaticJsonDocument<256> ackDoc;
+  
+  ackDoc["type"] = "SCHEDULE_ACK";
+  JsonObject data = ackDoc.createNestedObject("data");
+  data["schedule_id"] = scheduleId;
+  data["org_id"] = orgId;
+  data["device_type"] = deviceType;
+  data["ack"] = true;
+
+  String ackPayload;
+  serializeJson(ackDoc, ackPayload);
+
+  // Publish to your AWS IoT MQTT topic
+
+  if (client.publish(ackTopic, ackPayload.c_str())) {
+    Serial.println("📨 Sent Schedule ACK:");
+    Serial.println(ackPayload);
+  } else {
+    Serial.println("❌ Failed to send Schedule ACK");
+  }
+}

@@ -1,0 +1,14 @@
+aws dynamodb delete-item ^
+    --table-name Users ^
+    --key '{"email": { "S": "hrhit6581@gmail.com"}}'
+
+
+aws dynamodb delete-item ^
+    --table-name Users ^
+    --key '{"email": {"S": "hrhit6581@gmail.com"}}'
+
+aws dynamodb delete-item --table-name Users --key "{\"email\":{\"S\":\"hrhit6581@gmail.com\"}}"
+
+aws dynamodb scan ^
+  --table-name Users ^
+  --region local

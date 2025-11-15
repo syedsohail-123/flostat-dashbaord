@@ -1,0 +1,241 @@
+org: harshitchopde
+app: aws-team-dashboard
+
+service: aws-team-dashboard-nodejs20
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  timeout: 20
+  region: ap-south-1
+  stage: ${opt:stage, 'prod'} # default to dev
+  environment:
+    IS_OFFLINE: "false"
+    USER_TABLE: ${self:custom.tables.${self:provider.stage}.USER_TABLE}
+    ORG_TABLE: ${self:custom.tables.${self:provider.stage}.ORG_TABLE}
+    OTP_TABLE: ${self:custom.tables.${self:provider.stage}.OTP_TABLE}
+    USER_ORG_ROLE: ${self:custom.tables.${self:provider.stage}.USER_ORG_ROLE}
+    DEVICE_TABLE: ${self:custom.tables.${self:provider.stage}.DEVICE_TABLE}
+    DEVICE_STATUS_TABLE: ${self:custom.tables.${self:provider.stage}.DEVICE_STATUS_TABLE}
+    DEVICE_TOKEN_TABLE: ${self:custom.tables.${self:provider.stage}.DEVICE_TOKEN_TABLE}
+    BLOCK_TABLE: ${self:custom.tables.${self:provider.stage}.BLOCK_TABLE}
+    LOGS_TABLE: ${self:custom.tables.${self:provider.stage}.LOGS_TABLE}
+    VALVE_SCHEDULES: ${self:custom.tables.${self:provider.stage}.VALVE_SCHEDULES}
+    CUSTOMER_QUERY: ${self:custom.tables.${self:provider.stage}.CUSTOMER_QUERY}
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:GetItem"
+        - "dynamodb:Query"
+        - "dynamodb:Scan"
+        - "dynamodb:PutItem"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DeleteItem"
+        - "iot:Publish"
+      Resource:
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/*"
+custom:
+  tables:
+    dev:
+      USER_TABLE: Users
+      ORG_TABLE: OrgTable
+      OTP_TABLE: OtpTable
+      USER_ORG_ROLE: UserOrgRole
+      DEVICE_TABLE: DeviceTable
+      DEVICE_STATUS_TABLE: DeviceStatus
+      DEVICE_TOKEN_TABLE: DeviceTokensTable
+      BLOCK_TABLE: BlockTable
+      LOGS_TABLE: LogsTable
+      VALVE_SCHEDULES: ValveSchedules
+      CUSTOMER_QUERY: CustomerQuery
+    prod:
+      USER_TABLE: AWS_User_registration
+      ORG_TABLE: AWS_Organisation_Table
+      OTP_TABLE: AWS_OtpTable_Table
+      USER_ORG_ROLE: AWS_UserOrgRole_Table
+      DEVICE_TABLE: AWS_DeviceTable_Table
+      DEVICE_STATUS_TABLE: AWS_DeviceStatus_Table
+      DEVICE_TOKEN_TABLE: AWS_DeviceTokensTable_Table
+      BLOCK_TABLE: AWS_BlockTable_Table
+      LOGS_TABLE: AWS_LogsTable_Table
+      VALVE_SCHEDULES: AWS_ValveSchedule_Table
+      CUSTOMER_QUERY: AWS_CustomerQuery_Table
+
+functions:
+  api:
+    handler: index.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: any
+
+plugins:
+  - serverless-offline
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.USER_TABLE}
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    OrganisationTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.ORG_TABLE}
+        AttributeDefinitions:
+          - AttributeName: org_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: org_id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    OtpTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.OTP_TABLE}
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TimeToLiveSpecification:
+          AttributeName: expiresAt
+          Enabled: true
+
+    UserOrgRoleTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.USER_ORG_ROLE}
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+          - AttributeName: org_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+          - AttributeName: org_id
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+    DeviceTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.DEVICE_TABLE}
+        AttributeDefinitions:
+          - AttributeName: org_id
+            AttributeType: S
+          - AttributeName: device_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: org_id
+            KeyType: HASH
+          - AttributeName: device_id
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+    DeviceStatusTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.DEVICE_STATUS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: org_id
+            AttributeType: S
+          - AttributeName: device_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: org_id
+            KeyType: HASH
+          - AttributeName: device_id
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    CustomerQuery:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.CUSTOMER_QUERY}
+        AttributeDefinitions:
+          - AttributeName: org_id
+            AttributeType: S
+          - AttributeName: query_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: org_id
+            KeyType: HASH
+          - AttributeName: query_id
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    DeviceTokensTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.DEVICE_TOKEN_TABLE}
+        AttributeDefinitions:
+          - AttributeName: token_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: token_id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    BlockTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.BLOCK_TABLE}
+        AttributeDefinitions:
+          - AttributeName: block_id
+            AttributeType: S
+          - AttributeName: org_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: block_id
+            KeyType: HASH
+          - AttributeName: org_id
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    LogsTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.LOGS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: uuid
+            AttributeType: S 
+        KeySchema:
+          - AttributeName: uuid
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    ScheduleTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.VALVE_SCHEDULES}
+        AttributeDefinitions:
+          - AttributeName: org_id
+            AttributeType: S
+          - AttributeName: schedule_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: org_id
+            KeyType: HASH
+          - AttributeName: schedule_id
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST

@@ -1,0 +1,99 @@
+{
+  "type": "SCHEDULE_DELETE",
+  "data": {
+    "pump_ack": false,
+    "device_id": "8f834950-e6ab-40a3-b9a5-1baa6d5f191f",
+    "end_time": "11:30",
+    "created_at": "2025-10-23T15:33:13.179Z",
+    "device_type": "valve",
+    "p_start_time": "10:30:30",
+    "created_by": "user_admin",
+    "block_id": "fddc7a4e-4ea9-472d-b02f-574c0af41522",
+    "valve_ack": false,
+    "recurrence": {
+      "type": "daily",
+      "interval": 1
+    },
+    "start_time": "10:30",
+    "acknowledge": {
+      "valve_id": "8f834950-e6ab-40a3-b9a5-1baa6d5f191f",
+      "pump_id": "9e54857e-bee5-477e-b671-ecac1f2d1453"
+    },
+    "org_id": "abfce502-4a3a-42a4-8130-0ce0b559a827",
+    "schedule_status": "UPDATING",
+    "safety_offset": {
+      "post": 30,
+      "pre": 30
+    },
+    "schedule_id": "9991a6b0-2eec-446e-ae48-afe7a20009f1"
+  },
+  "timestamp": "2025-10-23T15:35:13.670Z"
+}
+Properties
+flostat/abfce502-4a3a-42a4-8130-0ce0b559a827/command/fddc7a4e-4ea9-472d-b02f-574c0af41522/pump/9e54857e-bee5-477e-b671-ecac1f2d1453/hardware
+October 23, 2025, 21:04:37 (UTC+0530)
+{
+  "type": "SCHEDULE_UPDATE",
+  "data": {
+    "pump_ack": false,
+    "device_id": "8f834950-e6ab-40a3-b9a5-1baa6d5f191f",
+    "end_time": "11:30",
+    "created_at": "2025-10-23T15:33:13.179Z",
+    "device_type": "valve",
+    "p_start_time": "10:30:30",
+    "created_by": "user_admin",
+    "block_id": "fddc7a4e-4ea9-472d-b02f-574c0af41522",
+    "valve_ack": false,
+    "recurrence": {
+      "type": "daily",
+      "interval": 1
+    },
+    "start_time": "10:30",
+    "acknowledge": {
+      "valve_id": "8f834950-e6ab-40a3-b9a5-1baa6d5f191f",
+      "pump_id": "9e54857e-bee5-477e-b671-ecac1f2d1453"
+    },
+    "org_id": "abfce502-4a3a-42a4-8130-0ce0b559a827",
+    "schedule_status": "UPDATING",
+    "safety_offset": {
+      "post": 30,
+      "pre": 30
+    },
+    "schedule_id": "9991a6b0-2eec-446e-ae48-afe7a20009f1"
+  },
+  "timestamp": "2025-10-23T15:34:36.645Z"
+}
+Properties
+flostat/abfce502-4a3a-42a4-8130-0ce0b559a827/command/fddc7a4e-4ea9-472d-b02f-574c0af41522/pump/9e54857e-bee5-477e-b671-ecac1f2d1453/hardware
+October 23, 2025, 21:03:13 (UTC+0530)
+{
+  "type": "SCHEDULE_CREATED",
+  "data": {
+    "schedule_id": "9991a6b0-2eec-446e-ae48-afe7a20009f1",
+    "org_id": "abfce502-4a3a-42a4-8130-0ce0b559a827",
+    "block_id": "fddc7a4e-4ea9-472d-b02f-574c0af41522",
+    "device_type": "valve",
+    "device_id": "8f834950-e6ab-40a3-b9a5-1baa6d5f191f",
+    "start_time": "10:40",
+    "p_start_time": "10:40:30",
+    "end_time": "11:30",
+    "recurrence": {
+      "type": "daily",
+      "interval": 1
+    },
+    "schedule_status": "CREATING",
+    "pump_ack": false,
+    "valve_ack": false,
+    "acknowledge": {
+      "valve_id": "8f834950-e6ab-40a3-b9a5-1baa6d5f191f",
+      "pump_id": "9e54857e-bee5-477e-b671-ecac1f2d1453"
+    },
+    "created_by": "user_admin",
+    "safety_offset": {
+      "pre": 30,
+      "post": 30
+    },
+    "created_at": "2025-10-23T15:33:13.179Z"
+  },
+  "timestamp": "2025-10-23T15:33:13.227Z"
+}

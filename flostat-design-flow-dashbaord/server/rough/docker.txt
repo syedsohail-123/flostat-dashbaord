@@ -1,0 +1,15 @@
+
+run docker 
+docker run -p 8000:8000 amazon/dynamodb-local 
+
+docker-compose up -d
+
+
+----
+1. Persistent DynamoDB Local Using Docker
+docker run -d -p 8000:8000 --name dynamodb ^
+  -v %cd%/dynamodb-data:/home/dynamodblocal/data ^
+  amazon/dynamodb-local ^
+  -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data
+
+chmod +x docker-entrypoint.sh

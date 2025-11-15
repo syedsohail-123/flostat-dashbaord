@@ -1,0 +1,570 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ApiLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/aws-team-dashboard-nodejs20-prod-api"
+      }
+    },
+    "IamRoleLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "aws-team-dashboard-nodejs20",
+                  "prod",
+                  "lambda"
+                ]
+              ]
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:CreateLogGroup",
+                    "logs:TagResource"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/aws-team-dashboard-nodejs20-prod*:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/aws-team-dashboard-nodejs20-prod*:*:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:Query",
+                    "dynamodb:Scan",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem",
+                    "iot:Publish"
+                  ],
+                  "Resource": "arn:aws:dynamodb:ap-south-1:*:table/*"
+                }
+              ]
+            }
+          }
+        ],
+        "Path": "/",
+        "RoleName": {
+          "Fn::Join": [
+            "-",
+            [
+              "aws-team-dashboard-nodejs20",
+              "prod",
+              {
+                "Ref": "AWS::Region"
+              },
+              "lambdaRole"
+            ]
+          ]
+        }
+      }
+    },
+    "ApiLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "serverless-framework-deployments-ap-south-1-f1f3c7cc-30ed",
+          "S3Key": "serverless/aws-team-dashboard-nodejs20/prod/1763101466615-2025-11-14T06:24:26.615Z/aws-team-dashboard-nodejs20.zip"
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs20.x",
+        "FunctionName": "aws-team-dashboard-nodejs20-prod-api",
+        "MemorySize": 1024,
+        "Timeout": 20,
+        "Environment": {
+          "Variables": {
+            "IS_OFFLINE": "false",
+            "USER_TABLE": "AWS_User_registration",
+            "ORG_TABLE": "AWS_Organisation_Table",
+            "OTP_TABLE": "AWS_OtpTable_Table",
+            "USER_ORG_ROLE": "AWS_UserOrgRole_Table",
+            "DEVICE_TABLE": "AWS_DeviceTable_Table",
+            "DEVICE_STATUS_TABLE": "AWS_DeviceStatus_Table",
+            "DEVICE_TOKEN_TABLE": "AWS_DeviceTokensTable_Table",
+            "BLOCK_TABLE": "AWS_BlockTable_Table",
+            "LOGS_TABLE": "AWS_LogsTable_Table",
+            "VALVE_SCHEDULES": "AWS_ValveSchedule_Table",
+            "CUSTOMER_QUERY": "AWS_CustomerQuery_Table"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "ApiLogGroup"
+      ]
+    },
+    "ApiLambdaVersionxHETT02YJlCso0DJ0WECm3J7I9gy3rPTNF9HusMM": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "ApiLambdaFunction"
+        },
+        "CodeSha256": "/kjiKgXUChJi6uBGanMRUE9ehTGXtLQNbmR5pDeoYqc="
+      }
+    },
+    "HttpApi": {
+      "Type": "AWS::ApiGatewayV2::Api",
+      "Properties": {
+        "Name": "prod-aws-team-dashboard-nodejs20",
+        "ProtocolType": "HTTP"
+      }
+    },
+    "HttpApiStage": {
+      "Type": "AWS::ApiGatewayV2::Stage",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "StageName": "$default",
+        "AutoDeploy": true,
+        "DefaultRouteSettings": {
+          "DetailedMetricsEnabled": false
+        }
+      }
+    },
+    "ApiLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ApiLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationApi": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "ApiLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRouteAnyProxyVar": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "ANY /{proxy+}",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationApi"
+              }
+            ]
+          ]
+        }
+      },
+      "DependsOn": "HttpApiIntegrationApi"
+    },
+    "UsersTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_User_registration",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "email",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "email",
+            "KeyType": "HASH"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    },
+    "OrganisationTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_Organisation_Table",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "org_id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "org_id",
+            "KeyType": "HASH"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    },
+    "OtpTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_OtpTable_Table",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "email",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "email",
+            "KeyType": "HASH"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "TimeToLiveSpecification": {
+          "AttributeName": "expiresAt",
+          "Enabled": true
+        }
+      }
+    },
+    "UserOrgRoleTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_UserOrgRole_Table",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "email",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "org_id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "email",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "org_id",
+            "KeyType": "RANGE"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    },
+    "DeviceTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_DeviceTable_Table",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "org_id",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "device_id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "org_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "device_id",
+            "KeyType": "RANGE"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    },
+    "DeviceStatusTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_DeviceStatus_Table",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "org_id",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "device_id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "org_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "device_id",
+            "KeyType": "RANGE"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    },
+    "CustomerQuery": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_CustomerQuery_Table",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "org_id",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "query_id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "org_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "query_id",
+            "KeyType": "RANGE"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    },
+    "DeviceTokensTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_DeviceTokensTable_Table",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "token_id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "token_id",
+            "KeyType": "HASH"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    },
+    "BlockTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_BlockTable_Table",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "block_id",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "org_id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "block_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "org_id",
+            "KeyType": "RANGE"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    },
+    "LogsTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_LogsTable_Table",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "uuid",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "uuid",
+            "KeyType": "HASH"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    },
+    "ScheduleTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "TableName": "AWS_ValveSchedule_Table",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "org_id",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "schedule_id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "org_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "schedule_id",
+            "KeyType": "RANGE"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": "serverless-framework-deployments-ap-south-1-f1f3c7cc-30ed",
+      "Export": {
+        "Name": "sls-aws-team-dashboard-nodejs20-prod-ServerlessDeploymentBucketName"
+      }
+    },
+    "ApiLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "ApiLambdaVersionxHETT02YJlCso0DJ0WECm3J7I9gy3rPTNF9HusMM"
+      },
+      "Export": {
+        "Name": "sls-aws-team-dashboard-nodejs20-prod-ApiLambdaFunctionQualifiedArn"
+      }
+    },
+    "HttpApiId": {
+      "Description": "Id of the HTTP API",
+      "Value": {
+        "Ref": "HttpApi"
+      },
+      "Export": {
+        "Name": "sls-aws-team-dashboard-nodejs20-prod-HttpApiId"
+      }
+    },
+    "HttpApiUrl": {
+      "Description": "URL of the HTTP API",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "HttpApi"
+            },
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region"
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix"
+            }
+          ]
+        ]
+      },
+      "Export": {
+        "Name": "sls-aws-team-dashboard-nodejs20-prod-HttpApiUrl"
+      }
+    }
+  }
+}

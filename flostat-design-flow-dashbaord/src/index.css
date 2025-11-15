@@ -1,0 +1,382 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Flostat Design System v1.0
+   Keywords: Precision • Industrial • Fluid • Intelligent • Modern
+   Tone: Confident, engineered, reliable, premium
+   Typography: Inter (Primary), General Sans (Fallback)
+   Material: Matte metallic + aqua light sheen
+*/
+
+@layer base {
+  :root {
+    /* Flostat Brand Colors - Exact per spec */
+    --background: 210 40% 98%; /* Soft Off-White #F8FAFC */
+    --foreground: 0 0% 10%; /* Charcoal Black #1A1A1A */
+    --inverse-foreground: 0 0% 100%; /* White for text over dark */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+
+    /* Deep Navy for primary actions & app shell */
+    --primary: 214 77% 16%; /* Deep Navy #0A1F44 */
+    /* Dedicated navy semantic tokens for reuse (slightly lighter hover) */
+    --navy: 214 77% 16%; /* #0A1F44 */
+    --navy-hover: 214 74% 20%; /* #0D2A59 */
+    --primary-foreground: 0 0% 100%; /* White */
+
+    /* Secondary Gray for panels/cards */
+    --secondary: 220 13% 34%; /* Graphite Grey #4B5563 */
+    --secondary-foreground: 0 0% 100%;
+
+    /* Aqua Flow Blue for interactive highlights */
+    --aqua: 192 100% 42%; /* Aqua Flow Blue #00B4D8 */
+    --aqua-foreground: 0 0% 100%;
+
+    /* Highlight silver for dividers/outlines */
+    --highlight: 0 0% 75%; /* Silver Metallic #C0C0C0 */
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 220 13% 46%;
+
+    --accent: 192 100% 42%; /* Aqua Flow */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 58%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 65% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 45 100% 50%; /* Amber Signal #FFC107 */
+    --warning-foreground: 0 0% 100%;
+
+    --border: 0 0% 75%; /* Highlight */
+    --input: 220 13% 91%;
+    --ring: 192 100% 42%; /* Aqua focus rings */
+
+    --radius: 0.5rem; /* Slightly more rounded */
+
+    /* Multi-layer Shadow System - Softer for eye comfort */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    /* Smooth Transitions */
+    --transition-base: cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: cubic-bezier(0.4, 0, 0.6, 1);
+    --transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-duration: 200ms;
+    --transition-slow: 300ms;
+
+    /* Design System Spacing Scale (px) */
+    --spacing-1: 0.25rem; /* 4px */
+    --spacing-2: 0.5rem; /* 8px */
+    --spacing-3: 0.75rem; /* 12px */
+    --spacing-4: 1rem; /* 16px */
+    --spacing-6: 1.5rem; /* 24px */
+    --spacing-8: 2rem; /* 32px */
+
+    /* 12-column grid system */
+    --grid-columns: 12;
+    --grid-gutter: 1.5rem; /* 24px */
+
+    /* Sidebar - Softer Deep Navy shell */
+    --sidebar-background: 214 65% 18%; /* Softer Deep Navy */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 192 85% 45%; /* Softer Aqua Flow */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 65% 22%; /* Slightly lighter navy */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 214 65% 22%;
+    --sidebar-ring: 192 85% 45%;
+
+    /* Elevation tokens */
+    --elevation-1: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --elevation-2: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --elevation-3: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --elevation-4: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+
+    /* Spacing scale */
+    --spacing-xs: 0.25rem; /* 4px */
+    --spacing-sm: 0.5rem; /* 8px */
+    --spacing-md: 0.75rem; /* 12px */
+    --spacing-base: 1rem; /* 16px */
+    --spacing-lg: 1.5rem; /* 24px */
+    --spacing-xl: 2rem; /* 32px */
+  }
+
+  .dark {
+    --background: 214 77% 12%;
+    --foreground: 0 0% 98%;
+
+    --card: 214 77% 16%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 214 77% 16%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 192 100% 42%;
+    --navy: 214 77% 12%;
+    --navy-hover: 214 77% 18%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 13% 25%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 220 13% 20%;
+    --muted-foreground: 220 13% 65%;
+
+    --accent: 192 100% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --border: 220 13% 25%;
+    --input: 220 13% 20%;
+    --ring: 192 100% 42%;
+
+    --sidebar-background: 214 77% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 192 100% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 77% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 214 77% 16%;
+    --sidebar-ring: 192 100% 42%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Satoshi", "Inter", "General Sans", -apple-system,
+      BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  /* Satoshi Typography Scale - engineered clarity */
+  h1 {
+    @apply text-3xl font-bold tracking-tight;
+    font-family: "Satoshi", "Inter", sans-serif;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+  h2 {
+    @apply text-2xl font-semibold tracking-tight;
+    font-family: "Satoshi", "Inter", sans-serif;
+    line-height: 1.3;
+    font-weight: 600;
+  }
+  h3 {
+    @apply text-xl font-semibold;
+    font-family: "Satoshi", "Inter", sans-serif;
+    line-height: 1.4;
+    font-weight: 600;
+  }
+  h4 {
+    @apply text-lg font-semibold;
+    font-family: "Satoshi", "Inter", sans-serif;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+  h5 {
+    @apply text-base font-semibold;
+    font-family: "Satoshi", "Inter", sans-serif;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+  h6 {
+    @apply text-sm font-semibold;
+    font-family: "Satoshi", "Inter", sans-serif;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  /* WCAG AA Focus Rings - Softer aqua with smooth transition */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    transition: outline-offset var(--transition-duration) var(--transition-base);
+  }
+}
+
+/* Smooth animations and micro-interactions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes successPop {
+  0% {
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Status indicators */
+@layer components {
+  .status-active {
+    @apply bg-success text-success-foreground;
+  }
+  .status-inactive {
+    @apply bg-muted text-muted-foreground;
+  }
+  .status-warning {
+    @apply bg-warning text-warning-foreground;
+  }
+  .status-error {
+    @apply bg-destructive text-destructive-foreground;
+  }
+}
+
+/* Eye-soothing utility classes */
+@layer utilities {
+  /* Shadow utilities */
+  .shadow-soft-sm {
+    box-shadow: var(--shadow-sm);
+  }
+  .shadow-soft-md {
+    box-shadow: var(--shadow-md);
+  }
+  .shadow-soft-lg {
+    box-shadow: var(--shadow-lg);
+  }
+  .shadow-soft-xl {
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Gradient backgrounds for cards */
+  .bg-gradient-card {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--card)) 0%,
+      hsl(210 40% 99%) 100%
+    );
+  }
+
+  /* Glass morphism effect */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all var(--transition-duration) var(--transition-base);
+  }
+
+  .transition-smooth-slow {
+    transition: all var(--transition-slow) var(--transition-smooth);
+  }
+
+  /* Hover lift effect */
+  .hover-lift {
+    transition: transform var(--transition-duration) var(--transition-base),
+      box-shadow var(--transition-duration) var(--transition-base);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Text color utilities with softer opacity */
+  .text-soft {
+    color: hsl(var(--foreground) / 0.95);
+  }
+
+  .text-soft-muted {
+    color: hsl(var(--foreground) / 0.65);
+  }
+
+  .text-soft-subtle {
+    color: hsl(var(--foreground) / 0.45);
+  }
+
+  /* Animations */
+  .animate-fadeIn {
+    animation: fadeIn 0.3s var(--transition-base);
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.3s var(--transition-base);
+  }
+
+  .animate-pulse-soft {
+    animation: pulse 2s var(--transition-base) infinite;
+  }
+
+  .animate-successPop {
+    animation: successPop 0.3s var(--transition-bounce);
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
