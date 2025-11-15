@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Mail, User, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export default function SignUp() {
   const [firstName, setFirstName] = useState("");
@@ -14,7 +16,9 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signup } = useAuth();
 
   const rules = useMemo(() => {
     const length = password.length >= 8;
@@ -25,6 +29,45 @@ export default function SignUp() {
     return { length, upper, lower, number, special };
   }, [password]);
 
+  const isFormValid = useMemo(() => {
+    return (
+      firstName.trim() !== "" &&
+      lastName.trim() !== "" &&
+      email.trim() !== "" &&
+      password.trim() !== "" &&
+      confirmPassword.trim() !== "" &&
+      password === confirmPassword &&
+      Object.values(rules).every(rule => rule)
+    );
+  }, [firstName, lastName, email, password, confirmPassword, rules]);
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!isFormValid) {
+      toast.error("Please fill all required fields and ensure password meets requirements");
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      // In a real implementation, this would call the API to create a new user
+      // For now, we'll just simulate the signup and navigate to the dashboard
+      const success = await signup({ email, password, name: `${firstName} ${lastName}` });
+      if (success) {
+        toast.success("Account created successfully!");
+        navigate('/dashboard');
+      } else {
+        toast.error("Failed to create account. Please try again.");
+      }
+    } catch (error) {
+      console.error("Signup failed:", error);
+      toast.error("An error occurred during signup. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-[70vh] w-full flex items-center justify-center">
       <Card className="w-full max-w-2xl shadow-soft-lg border-border/50">
@@ -32,109 +75,138 @@ export default function SignUp() {
           <CardTitle className="text-center">Sign Up</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">First Name <span className="text-destructive">*</span></label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="First Name" className="pl-9" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+          <form onSubmit={handleSignUp}>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">First Name <span className="text-destructive">*</span></label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="First Name" 
+                    className="pl-9" 
+                    value={firstName} 
+                    onChange={(e) => setFirstName(e.target.value)} 
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Middle Name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Middle Name" 
+                    className="pl-9" 
+                    value={middleName} 
+                    onChange={(e) => setMiddleName(e.target.value)} 
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Last Name <span className="text-destructive">*</span></label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Last Name" 
+                    className="pl-9" 
+                    value={lastName} 
+                    onChange={(e) => setLastName(e.target.value)} 
+                    required
+                  />
+                </div>
               </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Middle Name</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Middle Name" className="pl-9" value={middleName} onChange={(e) => setMiddleName(e.target.value)} />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Last Name <span className="text-destructive">*</span></label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Last Name" className="pl-9" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-              </div>
-            </div>
-          </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Email <span className="text-destructive">*</span></label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="pl-9"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Password <span className="text-destructive">*</span></label>
+            <div className="space-y-1 mt-3">
+              <label className="text-sm font-medium">Email <span className="text-destructive">*</span></label>
               <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  type={showPw ? "text" : "password"}
-                  placeholder="Password"
-                  className="pr-9"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type="email"
+                  placeholder="Enter your email"
+                  className="pl-9"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPw((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground"
-                  aria-label={showPw ? "Hide password" : "Show password"}
-                >
-                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {password && (
-                <ul className="mt-2 space-y-1 text-xs">
-                  <li className="flex items-center gap-1">
-                    {rules.length ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}<span>At least 8 characters</span>
-                  </li>
-                  <li className="flex items-center gap-1">
-                    {rules.upper ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}<span>One uppercase letter</span>
-                  </li>
-                  <li className="flex items-center gap-1">
-                    {rules.lower ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}<span>One lowercase letter</span>
-                  </li>
-                  <li className="flex items-center gap-1">
-                    {rules.number ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}<span>One number</span>
-                  </li>
-                  <li className="flex items-center gap-1">
-                    {rules.special ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}<span>One special character</span>
-                  </li>
-                </ul>
-              )}
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Confirm Password <span className="text-destructive">*</span></label>
-              <div className="relative">
-                <Input
-                  type={showConfirmPw ? "text" : "password"}
-                  placeholder="Confirm Password"
-                  className="pr-9"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPw((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground"
-                  aria-label={showConfirmPw ? "Hide password" : "Show password"}
-                >
-                  {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
             </div>
-          </div>
 
-          <Button className="w-full h-10 bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white font-medium" onClick={() => navigate('/organizations')}>
-            Sign Up
-          </Button>
+            <div className="grid gap-3 md:grid-cols-2 mt-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Password <span className="text-destructive">*</span></label>
+                <div className="relative">
+                  <Input
+                    type={showPw ? "text" : "password"}
+                    placeholder="Password"
+                    className="pr-9"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((s) => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground"
+                    aria-label={showPw ? "Hide password" : "Show password"}
+                  >
+                    {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {password && (
+                  <ul className="mt-2 space-y-1 text-xs">
+                    <li className="flex items-center gap-1">
+                      {rules.length ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}<span>At least 8 characters</span>
+                    </li>
+                    <li className="flex items-center gap-1">
+                      {rules.upper ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}<span>One uppercase letter</span>
+                    </li>
+                    <li className="flex items-center gap-1">
+                      {rules.lower ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}<span>One lowercase letter</span>
+                    </li>
+                    <li className="flex items-center gap-1">
+                      {rules.number ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}<span>One number</span>
+                    </li>
+                    <li className="flex items-center gap-1">
+                      {rules.special ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}<span>One special character</span>
+                    </li>
+                  </ul>
+                )}
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Confirm Password <span className="text-destructive">*</span></label>
+                <div className="relative">
+                  <Input
+                    type={showConfirmPw ? "text" : "password"}
+                    placeholder="Confirm Password"
+                    className="pr-9"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPw((s) => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground"
+                    aria-label={showConfirmPw ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {password && confirmPassword && password !== confirmPassword && (
+                  <p className="text-xs text-destructive mt-1">Passwords do not match</p>
+                )}
+              </div>
+            </div>
+
+            <Button 
+              className="w-full h-10 bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white font-medium mt-4" 
+              type="submit"
+              disabled={!isFormValid || isLoading}
+            >
+              {isLoading ? "Creating Account..." : "Sign Up"}
+            </Button>
+          </form>
           
           <div className="relative my-2">
             <div className="absolute inset-0 flex items-center">

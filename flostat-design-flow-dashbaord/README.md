@@ -65,6 +65,8 @@ npm run dev
 
 The frontend will be available at http://localhost:5132
 
+When you first visit the application, you will be directed to the Sign Up page. After creating an account or signing in, you will be taken to the dashboard.
+
 ## Backend
 
 The backend is built with:
@@ -115,6 +117,19 @@ npm start
 ```
 
 The backend will be available at http://localhost:4000
+
+### Firebase Setup (Optional)
+
+For Firebase Cloud Messaging (FCM) notifications to work, you need to set up a Firebase project and obtain a service account key:
+
+1. Create a Firebase project at https://console.firebase.google.com/
+2. Generate a service account key:
+   - Go to Project Settings > Service Accounts
+   - Click "Generate new private key"
+   - Save the JSON file as `server/utils/serviceAccountKey.json`
+3. Replace the placeholder values in the serviceAccountKey.json file with your actual Firebase credentials
+
+If you don't need FCM notifications, you can skip this step. The application will work without Firebase, and notifications will be logged to the console instead.
 
 ## Integration Points
 

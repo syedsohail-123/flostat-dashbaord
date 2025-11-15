@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Dashboard from "./pages/Dashboard";
@@ -18,20 +18,32 @@ import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Organizations from "./pages/Organizations.tsx";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
 function AppShell() {
   const location = useLocation();
-  const shelllessRoutes = ["/signin", "/signup", "/organizations"] as const;
+  const { isAuthenticated } = useAuth();
+  const shelllessRoutes = ["/", "/signin", "/signup", "/organizations"] as const;
   const isShellless = shelllessRoutes.some((p) => p === location.pathname);
+
+  // Redirect authenticated users from auth pages to dashboard
+  if (isAuthenticated && (location.pathname === "/" || location.pathname === "/signin" || location.pathname === "/signup")) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Redirect unauthenticated users from protected pages to signup
+  if (!isAuthenticated && !shelllessRoutes.includes(location.pathname as any)) {
+    return <Navigate to="/" replace />;
+  }
 
   if (isShellless) {
     return (
       <div className="min-h-screen w-full flex flex-col">
         <main className="flex-1 p-6 overflow-auto">
           <Routes>
+            <Route path="/" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/organizations" element={<Organizations />} />
@@ -52,7 +64,7 @@ function AppShell() {
           </header>
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/devices" element={<Devices />} />
               <Route path="/users" element={<Users />} />
               <Route path="/schedule" element={<Schedule />} />

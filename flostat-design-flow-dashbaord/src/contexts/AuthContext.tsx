@@ -6,9 +6,16 @@ interface User {
   name: string;
 }
 
+interface SignupData {
+  email: string;
+  password: string;
+  name: string;
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
+  signup: (data: SignupData) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -56,6 +63,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signup = async (data: SignupData): Promise<boolean> => {
+    // In a real app, this would make an API call to create a new user
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Mock successful signup
+      const mockUser = {
+        id: '1',
+        email: data.email,
+        name: data.name
+      };
+      
+      setUser(mockUser);
+      setIsAuthenticated(true);
+      return true;
+    } catch (error) {
+      console.error('Signup error:', error);
+      return false;
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
@@ -63,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

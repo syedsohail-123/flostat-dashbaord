@@ -83,6 +83,12 @@ export default function Organizations() {
     }
   };
 
+  const handleSelectOrg = (orgId: string) => {
+    // In a real implementation, you would store the selected organization
+    // For now, we'll just navigate to the dashboard
+    navigate('/dashboard');
+  };
+
   if (loading) {
     return (
       <div className="min-h-[70vh] w-full flex items-center justify-center">
@@ -113,7 +119,7 @@ export default function Organizations() {
             <CardContent className="space-y-2">
               {o.description && <p className="text-sm text-soft-muted">{o.description}</p>}
               {o.location && <p className="text-xs text-soft-muted">Location: {o.location}</p>}
-              <Button className="mt-2 w-full bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white" onClick={() => navigate("/")}>Enter Dashboard</Button>
+              <Button className="mt-2 w-full bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white" onClick={() => handleSelectOrg(o.id)}>Enter Dashboard</Button>
             </CardContent>
           </Card>
         ))}

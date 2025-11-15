@@ -6,6 +6,7 @@ import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +14,7 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -22,14 +24,14 @@ export default function SignIn() {
 
     setLoading(true);
     try {
-      const response = await apiService.login({ email, password });
-      if (response.success) {
-        // Store token in localStorage or context
-        localStorage.setItem("authToken", response.token);
+      // In a real implementation, this would call the API to authenticate the user
+      // For now, we'll just simulate the login and navigate to the dashboard
+      const success = await login(email, password);
+      if (success) {
         toast.success("Login successful!");
-        navigate('/organizations');
+        navigate('/dashboard');
       } else {
-        toast.error(response.message || "Login failed");
+        toast.error("Login failed. Please check your credentials.");
       }
     } catch (error) {
       toast.error("Login failed. Please check your credentials.");
