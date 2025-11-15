@@ -14,7 +14,7 @@ app.use(express.json())// parser to use json
 const PORT = process.env.PORT || 4000
 // Configure CORS to allow credentials
 app.use(cors({ 
-  origin: ["http://localhost:3000",
+  origin: ["http://localhost:5132",
     'https://awstraining.flostat.com',
     "http://localhost:56216"
   ],

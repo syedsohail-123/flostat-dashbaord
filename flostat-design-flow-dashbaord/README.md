@@ -63,6 +63,8 @@ cp .env.example .env
 npm run dev
 ```
 
+The frontend will be available at http://localhost:5132
+
 ## Backend
 
 The backend is built with:
@@ -111,6 +113,8 @@ cp .env.example .env
 ```bash
 npm start
 ```
+
+The backend will be available at http://localhost:4000
 
 ## Integration Points
 
