@@ -35,18 +35,11 @@ interface Report {
   updatedBy: string;
 }
 
-interface TankDevice {
-  device_id: string;
-  device_name: string;
-  device_type: string;
-}
-
 export default function Reports() {
   const { authToken, currentOrganization, organizations, setCurrentOrganization } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [tankDevices, setTankDevices] = useState<TankDevice[]>([]);
-  const [selectedTank, setSelectedTank] = useState<string>("no-tanks");
+  const [loading, setLoading] = useState(true);
+  const [selectedTank, setSelectedTank] = useState("tank-1");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   console.log("Reports: Component rendered with context values:", { 
@@ -55,48 +48,17 @@ export default function Reports() {
     organizations
   });
 
-  // Fetch tank devices when organization changes
   useEffect(() => {
-    if (authToken && currentOrganization) {
-      fetchTankDevices();
-    }
-  }, [authToken, currentOrganization]);
-
-  // Removed automatic fetching - data will only be fetched when user clicks "Fetch Data" button
-
-  const fetchTankDevices = async () => {
-    try {
-      if (!authToken || !currentOrganization) return;
-      
-      // Make sure the API service has the current auth token
+    // Make sure the API service has the current auth token
+    if (authToken) {
       apiService.setAuthToken(authToken);
-      
-      const response = await apiService.getDevices(currentOrganization.org_id);
-      
-      if (response.success && response.devices) {
-        // Filter only tank devices
-        const tanks = response.devices.filter((device: any) => 
-          device.device_type === 'tank'
-        );
-        setTankDevices(tanks);
-        
-        // Set the first tank as selected if none is selected or if current selection is invalid
-        if (tanks.length > 0 && (!selectedTank || selectedTank === "no-tanks")) {
-          setSelectedTank(tanks[0].device_id);
-        } else if (tanks.length === 0) {
-          // Reset selection if no tanks available
-          setSelectedTank("no-tanks");
-        }
-      }
-    } catch (error) {
-      console.error("Fetch tank devices error:", error);
-      toast.error("Failed to fetch tank devices");
     }
-  };
+    fetchReports();
+  }, [selectedTank, selectedDate, currentOrganization]);
 
   const fetchReports = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       
       console.log("Reports: Fetching reports with context:", { 
         authToken, 
@@ -108,10 +70,9 @@ export default function Reports() {
       // Log more details about the auth state
       console.log("Reports: Auth token exists:", !!authToken);
       console.log("Reports: Current organization exists:", !!currentOrganization);
-      console.log("Reports: Selected tank exists:", !!selectedTank);
       
-      if (authToken && currentOrganization && selectedTank && selectedTank !== "no-tanks") {
-        console.log("Reports: All required data present, proceeding with real fetch");
+      if (authToken && currentOrganization) {
+        console.log("Reports: Both auth token and organization are present, proceeding with real fetch");
         
         // Make sure the API service has the current auth token
         apiService.setAuthToken(authToken);
@@ -122,12 +83,6 @@ export default function Reports() {
           tank_id: selectedTank
         };
         
-        // Ensure date is in the correct format (YYYY-MM-DD)
-        if (params.date && !/\d{4}-\d{2}-\d{2}/.test(params.date)) {
-          const dateObj = new Date(params.date);
-          params.date = dateObj.toISOString().split('T')[0];
-        }
-        
         console.log("Reports: Fetching with params:", params);
         
         const response = await apiService.getTankRelatedReport(params);
@@ -135,32 +90,27 @@ export default function Reports() {
         console.log("Reports: API response:", response);
         
         // Check if response has the expected structure
-        if (!response) {
-          throw new Error("Invalid response from server");
+        if (!response || !response.connectedLogs) {
+          throw new Error("Invalid response structure from server");
         }
         
-        // Handle case where there are no connected logs
-        const connectedLogs = response.connectedLogs || [];
-        console.log('Connected logs received:', connectedLogs);
-        
         // Transform the response data to match our Report interface
-        const transformedReports: Report[] = connectedLogs.map((log: any) => ({
-          id: log.device_id || log.id || log.uuid || "Unknown", // Use available ID
-          deviceType: log.device_type || "Unknown",
-          status: log.status !== undefined ? log.status : null,
-          level: log.current_level ? `${log.current_level}%` : (log.level !== undefined ? log.level : null),
+        const transformedReports: Report[] = response.connectedLogs.map((log: any) => ({
+          id: log.id || log.uuid || log.device_id, // Use available ID
+          deviceType: log.device_type,
+          status: log.status || null,
+          level: log.level || null,
           lastUpdated: log.last_updated ? new Date(log.last_updated).toLocaleString() : "Unknown",
-          updatedBy: log.updated_by || log.email || "System"
+          updatedBy: log.updated_by || "System"
         }));
         
         setReports(transformedReports);
         console.log("Reports: Successfully set real data");
       } else {
         // Show mock data if not authenticated or no organization
-        console.log("Reports: Missing required data, showing demo data");
+        console.log("Reports: Missing auth token or organization, showing demo data");
         console.log("Reports: Auth token missing:", !authToken);
         console.log("Reports: Organization missing:", !currentOrganization);
-        console.log("Reports: Tank missing:", !selectedTank);
         
         if (!authToken) {
           toast.info("Please log in to see real-time reports from DynamoDB.");
@@ -170,12 +120,8 @@ export default function Reports() {
           } else {
             toast.info("Please select an organization to see real-time reports.");
           }
-        } else if (!selectedTank) {
-          if (tankDevices.length === 0) {
-            toast.info("No tank devices found in this organization.");
-          } else {
-            toast.info("Please select a tank to see reports.");
-          }
+        } else {
+          toast.info("Showing demo data. Log in and select an organization to see real reports.");
         }
         
         const mockReports: Report[] = [
@@ -210,10 +156,6 @@ export default function Reports() {
         toast.error("Organization access error", {
           description: "You don't have access to this organization. Please contact your administrator.",
         });
-      } else if (errorMessage.includes("Tank device not Found")) {
-        toast.error("Tank device not found", {
-          description: "The selected tank device does not exist in this organization.",
-        });
       } else {
         toast.error("Failed to fetch reports", {
           description: errorMessage,
@@ -246,6 +188,7 @@ export default function Reports() {
   };
 
   const handleFetchData = async () => {
+    // In a real implementation, this would fetch data based on selected tank and date
     toast.info(`Fetching data for ${selectedTank} on ${selectedDate || 'today'}`);
     await fetchReports();
   };
@@ -255,84 +198,26 @@ export default function Reports() {
     toast.info("Download PDF functionality would be implemented here");
   };
 
-  // Process real data for chart
-  const levelSeries = useMemo(() => {
-    // Group data by time and device type
-    const chartData: Record<string, any> = {};
-    
-    reports.forEach(report => {
-      console.log('Processing report for chart:', report);
-      // Extract time portion from lastUpdated
-      // Format: "11/8/2025, 3:20:15 PM" -> "3:20:15 PM" -> "15:20:15"
-      const timeMatch = report.lastUpdated?.match(/\d{1,2}:\d{2}:\d{2}\s*(AM|PM)/i);
-      if (timeMatch && (report.level || report.status !== null)) {
-        console.log('Matched time:', timeMatch[0], 'for report:', report);
-        let timeStr = timeMatch[0];
-        // Convert to 24-hour format
-        let [time, modifier] = timeStr.split(' ');
-        let [hours, minutes, seconds] = time.split(':');
-        
-        if (modifier?.toUpperCase() === 'PM' && hours !== '12') {
-          hours = (parseInt(hours, 10) + 12).toString();
-        }
-        if (modifier?.toUpperCase() === 'AM' && hours === '12') {
-          hours = '00';
-        }
-        
-        // Pad with zeros to ensure consistent format
-        hours = hours.padStart(2, '0');
-        minutes = minutes.padStart(2, '0');
-        seconds = seconds.padStart(2, '0');
-        
-        const formattedTime = `${hours}:${minutes}:${seconds}`;
-        
-        if (!chartData[formattedTime]) {
-          chartData[formattedTime] = { ts: formattedTime };
-        }
-        
-        // Add data based on device type
-        if (report.level) {
-          // For tanks/sumps with level data
-          const levelValue = parseInt(report.level);
-          if (!isNaN(levelValue)) {
-            chartData[formattedTime][report.deviceType.toLowerCase()] = levelValue;
-          }
-        } else if (report.status !== null) {
-          // For pumps/valves with status data (ON=1, OFF=0)
-          chartData[formattedTime][report.deviceType.toLowerCase()] = report.status === 'ON' ? 1 : 0;
-        }
-      }
-    });
-    
-    // Convert to array and sort by time
-    const dataArray = Object.values(chartData);
-    dataArray.sort((a, b) => a.ts.localeCompare(b.ts));
-    
-    console.log('Chart data array:', dataArray);
-    
-    // If we have no real data, show demo data
-    if (dataArray.length === 0) {
-      return [
-        { ts: "08:00:00", tank: 62, pump: 0, sump: 55 },
-        { ts: "09:00:00", tank: 64, pump: 1, sump: 57 },
-        { ts: "10:00:00", tank: 65, pump: 0, sump: 59 },
-        { ts: "11:00:00", tank: 67, pump: 1, sump: 60 },
-        { ts: "12:00:00", tank: 69, pump: 0, sump: 63 },
-        { ts: "13:00:00", tank: 70, pump: 1, sump: 65 },
-        { ts: "14:00:00", tank: 72, pump: 0, sump: 66 },
-        { ts: "15:00:00", tank: 73, pump: 1, sump: 67 },
-        { ts: "16:00:00", tank: 74, pump: 0, sump: 68 },
-      ];
-    }
-    
-    return dataArray;
-  }, [reports]);
+  // Demo time series (aggregated tank levels) for chart
+  const levelSeries = useMemo(
+    () => [
+      { ts: "08:00", tank1: 62, tank2: 55, tank3: 78 },
+      { ts: "09:00", tank1: 64, tank2: 57, tank3: 79 },
+      { ts: "10:00", tank1: 65, tank2: 59, tank3: 77 },
+      { ts: "11:00", tank1: 67, tank2: 60, tank3: 80 },
+      { ts: "12:00", tank1: 69, tank2: 63, tank3: 81 },
+      { ts: "13:00", tank1: 70, tank2: 65, tank3: 82 },
+      { ts: "14:00", tank1: 72, tank2: 66, tank3: 83 },
+      { ts: "15:00", tank1: 73, tank2: 67, tank3: 84 },
+      { ts: "16:00", tank1: 74, tank2: 68, tank3: 85 },
+    ],
+    []
+  );
 
   const chartConfig = {
-    tank: { label: "Tank Level", color: "hsl(192 100% 42%)" },
-    pump: { label: "Pump Status", color: "hsl(220 70% 62%)" },
-    sump: { label: "Sump Level", color: "hsl(142 65% 40%)" },
-    valve: { label: "Valve Status", color: "hsl(270 70% 60%)" },
+    tank1: { label: "Tank 1", color: "hsl(192 100% 42%)" },
+    tank2: { label: "Tank 2", color: "hsl(220 70% 62%)" },
+    tank3: { label: "Tank 3", color: "hsl(142 65% 40%)" },
   };
 
   const filteredReports = reports; // simple pass-through to match screenshot layout
@@ -370,26 +255,14 @@ export default function Reports() {
         <div className="flex items-end gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-soft-muted">Select Tank</label>
-            <Select value={selectedTank} onValueChange={setSelectedTank} disabled={tankDevices.length === 0}>
+            <Select value={selectedTank} onValueChange={setSelectedTank}>
               <SelectTrigger className="w-[160px] h-9">
-                <SelectValue placeholder="Select Tank">
-                  {selectedTank 
-                    ? tankDevices.find(t => t.device_id === selectedTank)?.device_name || selectedTank
-                    : "Select Tank"}
-                </SelectValue>
+                <SelectValue placeholder="Select Tank" />
               </SelectTrigger>
               <SelectContent>
-                {tankDevices.length > 0 ? (
-                  tankDevices.map((tank) => (
-                    <SelectItem key={tank.device_id} value={tank.device_id}>
-                      {tank.device_name || tank.device_id}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-tanks" disabled>
-                    No tanks available
-                  </SelectItem>
-                )}
+                <SelectItem value="tank-1">Tank 1</SelectItem>
+                <SelectItem value="tank-2">Tank 2</SelectItem>
+                <SelectItem value="tank-3">Tank 3</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -407,14 +280,14 @@ export default function Reports() {
           <Button 
             className="h-9 px-3 bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white shadow-soft-sm" 
             onClick={handleFetchData}
-            disabled={!authToken || !currentOrganization || !selectedTank || selectedTank === "no-tanks"}
+            disabled={!authToken || !currentOrganization}
           >
             Fetch Data
           </Button>
           <Button 
             className="h-9 px-3 bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-hover))] text-white shadow-soft-sm" 
             onClick={fetchReports}
-            disabled={loading || !authToken || !currentOrganization || !selectedTank || selectedTank === "no-tanks"}
+            disabled={loading || !authToken || !currentOrganization}
           >
             {loading ? (
               <div className="flex items-center gap-2">
@@ -480,41 +353,16 @@ export default function Reports() {
         <CardContent className="p-4">
           <ChartContainer config={chartConfig} className="w-full aspect-[16/6]">
             <AreaChart data={levelSeries} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
+              <defs>
+                <linearGradient id="tank2Fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(220 70% 62%)" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="hsl(220 70% 62%)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis dataKey="ts" tickLine={false} axisLine={false} />
-              <YAxis width={28} tickLine={false} axisLine={false} />
-              <Area 
-                dataKey="tank" 
-                stroke="var(--color-tank)" 
-                fill="var(--color-tank)" 
-                type="monotone" 
-                strokeWidth={2} 
-                fillOpacity={0.3}
-              />
-              <Area 
-                dataKey="pump" 
-                stroke="var(--color-pump)" 
-                fill="var(--color-pump)" 
-                type="monotone" 
-                strokeWidth={2} 
-                fillOpacity={0.3}
-              />
-              <Area 
-                dataKey="sump" 
-                stroke="var(--color-sump)" 
-                fill="var(--color-sump)" 
-                type="monotone" 
-                strokeWidth={2} 
-                fillOpacity={0.3}
-              />
-              <Area 
-                dataKey="valve" 
-                stroke="var(--color-valve)" 
-                fill="var(--color-valve)" 
-                type="monotone" 
-                strokeWidth={2} 
-                fillOpacity={0.3}
-              />
+              <YAxis width={28} tickLine={false} axisLine={false} domain={[50, 90]} />
+              <Area dataKey="tank2" stroke="var(--color-tank2)" fill="url(#tank2Fill)" type="monotone" strokeWidth={2} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <ChartLegend content={<ChartLegendContent />} />
             </AreaChart>

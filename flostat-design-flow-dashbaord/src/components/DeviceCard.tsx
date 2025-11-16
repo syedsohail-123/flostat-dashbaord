@@ -99,97 +99,26 @@ export function DeviceCard({ name, type, status, value, unit, threshold, locatio
         <div className="flex items-baseline justify-between">
           {type !== 'valve' && (
             <div>
-              <span className="text-3xl font-bold">{displayValue}</span>
-              <span className="ml-2 text-sm text-muted-foreground">{displayUnit}</span>
+              <p className="text-sm text-muted-foreground">{displayValue} {displayUnit}</p>
             </div>
           )}
-          <Badge
-            className={cn(
-              'text-xs flex items-center gap-1 font-medium rounded-full px-2 py-0.5 bg-[hsl(var(--navy))] text-white',
-              type === 'valve' && 'ml-auto'
-            )}
-            aria-label={type === 'sump' && sumpLevelCategory ? `Sump level ${sumpLevelCategory}` : undefined}
-          >
-            {type.toUpperCase()}
-            {type === 'tank' && tankLevelCategory && (
-              <span
-                className={cn(
-                  'ml-1 inline-block h-2 w-2 rounded-full',
-                  tankLevelCategory === 'low' && 'bg-[#C00000]',
-                  tankLevelCategory === 'normal' && 'bg-[#FFC107]',
-                  tankLevelCategory === 'high' && 'bg-[hsl(var(--aqua))]'
-                )}
-                aria-label={`Tank level ${tankLevelCategory}`}
-              />
-            )}
-          </Badge>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Last sync</p>
+            <p className="text-xs font-medium">Just now</p>
+          </div>
         </div>
-
-        {threshold && type !== 'tank' && type !== 'valve' && type !== 'pump' && type !== 'sump' && (
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Min: {threshold.min}</span>
-              <span>Max: {threshold.max}</span>
-            </div>
-            <div className="h-3 bg-muted rounded-full overflow-hidden">
-              <div
-                className={cn(
-                  'h-full transition-all',
-                  value >= threshold.min && value <= threshold.max ? 'bg-success' : 'bg-warning'
-                )}
-                style={{ width: `${Math.min((value / threshold.max) * 100, 100)}%` }}
-              />
-            </div>
+        <div className="pt-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">
+              {type === "valve" ? (isOn ? "Open" : "Closed") : (isOn ? "Running" : "Stopped")}
+            </span>
+            <Switch
+              checked={isOn}
+              onCheckedChange={setIsOn}
+              aria-label={nextActionLabel}
+            />
           </div>
-        )}
-        {type === 'tank' && tankPercent !== null && (
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Low</span>
-              <span>High</span>
-            </div>
-            <div className="h-3 bg-muted rounded-full overflow-hidden" aria-label={`Tank level ${tankPercent}%`}>
-              <div
-                className={cn(
-                  'h-full transition-all',
-                  tankLevelCategory === 'low' && 'bg-[#C00000]',
-                  tankLevelCategory === 'normal' && 'bg-[#FFC107]',
-                  tankLevelCategory === 'high' && 'bg-[hsl(var(--aqua))]'
-                )}
-                style={{ width: `${tankPercent}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {type !== "tank" && (
-          <div className="flex items-center justify-between border rounded-md p-2.5 bg-card">
-            <span className="text-sm font-medium text-soft">{type === "valve" ? "Valve" : "Power"}</span>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">
-                {isOn ? (type === "valve" ? "OPEN" : "ON") : (type === "valve" ? "CLOSED" : "OFF")}
-              </span>
-              <Switch
-                checked={isOn}
-                onCheckedChange={setIsOn}
-                aria-label={nextActionLabel}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Live region for assistive tech announcing status changes */}
-        <span className="sr-only" aria-live="polite">
-          {type === 'tank' && tankLevelCategory ? (
-            `${name} level ${tankLevelCategory}`
-          ) : type === 'sump' && sumpLevelCategory ? (
-            `${name} level ${sumpLevelCategory}`
-          ) : (
-            `${name} status ${derivedStatus}`
-          )}
-        </span>
-
-        {/* Details button removed per request */}
+        </div>
       </CardContent>
     </Card>
   );

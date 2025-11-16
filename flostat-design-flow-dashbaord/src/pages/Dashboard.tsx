@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { DeviceCard } from "@/components/DeviceCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BlockSelector, availableBlocks } from "@/components/BlockSelector";
+import { BlockSelector } from "@/components/BlockSelector";
 import { Badge } from "@/components/ui/badge";
-import { Activity, AlertTriangle, CheckCircle, XCircle, X, MoreVertical, Power, Settings } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle, XCircle, X, MoreVertical, Power, Settings, Plus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -32,7 +32,8 @@ import { Toggle } from "@/components/ui/toggle";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 
-const devices = [
+// Add state to store devices
+const initialDevices = [
   {
     id: "pump-001",
     name: "Primary Pump A1",
@@ -42,7 +43,7 @@ const devices = [
     unit: "RPM",
     threshold: { min: 2000, max: 4000 },
     location: "Building A - Floor 1",
-    block: "block-a",
+    block: "Block A",
     uptime: "99.8%",
     lastSync: "2 min ago",
   },
@@ -55,7 +56,7 @@ const devices = [
     unit: "%",
     threshold: { min: 0, max: 100 },
     location: "Building A - Floor 2",
-    block: "block-a",
+    block: "Block A",
     uptime: "98.5%",
     lastSync: "1 min ago",
   },
@@ -68,7 +69,7 @@ const devices = [
     unit: "L",
     threshold: { min: 5000, max: 10000 },
     location: "Building B - Ground",
-    block: "block-b",
+    block: "Block B",
     uptime: "97.2%",
     lastSync: "5 min ago",
   },
@@ -81,7 +82,7 @@ const devices = [
     unit: "RPM",
     threshold: { min: 2000, max: 4000 },
     location: "Building B - Floor 1",
-    block: "block-b",
+    block: "Block B",
     uptime: "0%",
     lastSync: "30 min ago",
   },
@@ -94,58 +95,102 @@ const devices = [
     unit: "L",
     threshold: { min: 5000, max: 10000 },
     location: "Building A - Floor 3",
-    block: "block-a",
+    block: "Block A",
     uptime: "99.9%",
     lastSync: "1 min ago",
   },
   {
-    id: "tank-002",
-    name: "Reserve Tank T2",
+    id: "valve-002",
+    name: "Backup Valve",
+    type: "valve" as const,
+    status: "active" as const,
+    value: 100,
+    unit: "%",
+    threshold: { min: 0, max: 100 },
+    location: "Building C - Floor 1",
+    block: "Block C",
+    uptime: "96.7%",
+    lastSync: "3 min ago",
+  },
+  {
+    id: "pump-003",
+    name: "Auxiliary Pump",
+    type: "pump" as const,
+    status: "warning" as const,
+    value: 1800,
+    unit: "RPM",
+    threshold: { min: 2000, max: 4000 },
+    location: "Building A - Floor 2",
+    block: "Block A",
+    uptime: "92.4%",
+    lastSync: "Just now",
+  },
+  {
+    id: "tank-staff",
+    name: "Staff Quarters Tank",
     type: "tank" as const,
-    status: "error" as const,
-    value: 2100,
+    status: "warning" as const,
+    value: 4200,
     unit: "L",
     threshold: { min: 5000, max: 10000 },
-    location: "Building C - Ground",
-    block: "block-c",
-    uptime: "45.3%",
-    lastSync: "15 min ago",
+    location: "Building A - Floor 1",
+    block: "Block A",
+    uptime: "95.1%",
+    lastSync: "1 min ago",
+  },
+  {
+    id: "tank-ahub",
+    name: "AHub Tank",
+    type: "tank" as const,
+    status: "active" as const,
+    value: 9100,
+    unit: "L",
+    threshold: { min: 5000, max: 10000 },
+    location: "Building D - Floor 1",
+    block: "Block D",
+    uptime: "98.9%",
+    lastSync: "4 min ago",
+  },
+  {
+    id: "pump-ahub",
+    name: "AHub Pump",
+    type: "pump" as const,
+    status: "active" as const,
+    value: 3800,
+    unit: "RPM",
+    threshold: { min: 2000, max: 4000 },
+    location: "Building D - Floor 1",
+    block: "Block D",
+    uptime: "99.2%",
+    lastSync: "3 min ago",
   },
   {
     id: "sump-001",
-    name: "Main Sump S1",
+    name: "Main Sump",
     type: "sump" as const,
     status: "active" as const,
-    value: 3200, // raw level units (e.g. liters) converted to % in card using max threshold
-    unit: "L",
-    threshold: { min: 500, max: 5000 }, // max used for percent conversion; min retained for potential alerts
-    location: "Building B - Basement",
-    block: "block-b",
-    uptime: "99.1%",
-    lastSync: "3 min ago",
+    value: 30,
+    unit: "cm",
+    threshold: { min: 0, max: 100 },
+    location: "Building A - Basement",
+    block: "Block A",
+    uptime: "100%",
+    lastSync: "Just now",
   },
 ];
 
+// Stats data
 const stats = [
-  { label: "Total Devices", value: "48", icon: Activity, color: "text-aqua" },
-  { label: "Active", value: "42", icon: CheckCircle, color: "text-success" },
-  { label: "Warnings", value: "4", icon: AlertTriangle, color: "text-warning" },
-  { label: "Offline", value: "2", icon: XCircle, color: "text-destructive" },
+  { label: "Total Devices", value: "11", icon: Activity, color: "text-blue-500" },
+  { label: "Active", value: "8", icon: CheckCircle, color: "text-green-500" },
+  { label: "Warnings", value: "2", icon: AlertTriangle, color: "text-yellow-500" },
+  { label: "Errors", value: "1", icon: XCircle, color: "text-red-500" },
 ];
-
-const getStatusBadge = (status: string) => {
-  const variants = {
-    active: { label: "Active", className: "bg-success/10 text-success border-success/20" },
-    inactive: { label: "Inactive", className: "bg-muted text-muted-foreground border-muted" },
-    warning: { label: "Warning", className: "bg-warning/10 text-warning border-warning/20" },
-    error: { label: "Error", className: "bg-destructive/10 text-destructive border-destructive/20" },
-  };
-  return variants[status as keyof typeof variants] || variants.inactive;
-};
 
 export default function Dashboard() {
   const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
-  const [multiTypes, setMultiTypes] = useState<string[]>([]); // multi device types
+  const [multiTypes, setMultiTypes] = useState<string[]>([]);
+  const [devices, setDevices] = useState<any[]>(initialDevices);
   const [minThreshold, setMinThreshold] = useState("");
   const [maxThreshold, setMaxThreshold] = useState("");
   // Filters
@@ -165,6 +210,38 @@ export default function Dashboard() {
   const [tank4Level, setTank4Level] = useState<number>(1);
   const [tankStaffLevel, setTankStaffLevel] = useState<number>(4);
   const [tankAHubLevel, setTankAHubLevel] = useState<number>(23);
+
+  // Load devices from localStorage when component mounts
+  useEffect(() => {
+    const loadDevicesFromStorage = () => {
+      const storedDevices = localStorage.getItem('dashboardDevices');
+      if (storedDevices) {
+        try {
+          const parsedDevices = JSON.parse(storedDevices);
+          setDevices([...initialDevices, ...parsedDevices]);
+        } catch (e) {
+          console.error('Failed to parse devices from localStorage', e);
+          setDevices(initialDevices);
+        }
+      } else {
+        setDevices(initialDevices);
+      }
+    };
+
+    loadDevicesFromStorage();
+
+    // Listen for updates to dashboard devices
+    const handleDevicesUpdate = () => {
+      loadDevicesFromStorage();
+    };
+
+    window.addEventListener('devicesUpdated', handleDevicesUpdate);
+    
+    // Cleanup listener
+    return () => {
+      window.removeEventListener('devicesUpdated', handleDevicesUpdate);
+    };
+  }, []);
 
   const clampPercent = (val: number) => Math.max(0, Math.min(100, Math.round(val)));
 
@@ -199,147 +276,241 @@ export default function Dashboard() {
   
   // Apply common filters once, then render by device type group order
   const visibleDevices = filteredDevices
-    .filter((d) => (statusFilter === 'all' ? true : d.status === statusFilter))
-    .filter((d) => (search.trim() ? (d.name.toLowerCase().includes(search.toLowerCase()) || d.id.toLowerCase().includes(search.toLowerCase())) : true));
-  const typeOrder: Array<'tank' | 'valve' | 'pump' | 'sump'> = ['tank', 'valve', 'pump', 'sump'];
-  const groupTitles: Record<'tank' | 'valve' | 'pump' | 'sump', string> = {
-    tank: 'Tanks',
-    valve: 'Valves',
-    pump: 'Pumps',
-    sump: 'Sumps',
+    .filter((d) => typeFilter === "all" || d.type === typeFilter)
+    .filter((d) => statusFilter === "all" || d.status === statusFilter)
+    .filter((d) => !search || d.name.toLowerCase().includes(search.toLowerCase()));
+
+  const pumpDevices = visibleDevices.filter((d) => d.type === "pump");
+  const valveDevices = visibleDevices.filter((d) => d.type === "valve");
+  const tankDevices = visibleDevices.filter((d) => d.type === "tank");
+  const sumpDevices = visibleDevices.filter((d) => d.type === "sump");
+
+  // Function to add a new device to the dashboard
+  const addDeviceToDashboard = (newDevice: any) => {
+    const storedDevices = localStorage.getItem('dashboardDevices');
+    const existingDevices = storedDevices ? JSON.parse(storedDevices) : [];
+    
+    const updatedDevices = [...existingDevices, newDevice];
+    
+    localStorage.setItem('dashboardDevices', JSON.stringify(updatedDevices));
+    
+    // Dispatch event to notify the dashboard to refresh devices
+    const event = new CustomEvent('devicesUpdated');
+    window.dispatchEvent(event);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Monitor and control your industrial systems</p>
+        </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">Select Block:</label>
-          <Select value={selectedBlocks.length === 0 ? "all" : selectedBlocks[0]} onValueChange={(value) => setSelectedBlocks(value === "all" ? [] : [value])}>
-            <SelectTrigger className={cn(
-              "w-[160px] h-9",
-              selectedBlocks.length > 0 &&
-                "border-[hsl(var(--aqua))] ring-2 ring-[hsl(var(--aqua))]/40 bg-[hsl(var(--aqua))]/5 shadow-soft-sm"
-            )}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Blocks</SelectItem>
-              {availableBlocks.map((block) => (
-                <SelectItem key={block.id} value={block.id}>
-                  {block.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {showFilterChip && (
-            <button
-              onClick={() => setSelectedBlocks([])}
-              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium bg-[hsl(var(--aqua))]/10 text-[hsl(var(--aqua))] border-[hsl(var(--aqua))]/20 hover:bg-[hsl(var(--aqua))]/20 transition-colors"
-              title="Clear block filter"
-            >
-              {availableBlocks.find((b) => b.id === selectedBlocks[0])?.name || selectedBlocks[0]}
-              <X className="h-3 w-3" />
-            </button>
-          )}
+          <Button variant="outline" size="sm">
+            <Settings className="mr-2 h-4 w-4" />
+            Configure
+          </Button>
+          <Button size="sm">Export Report</Button>
         </div>
       </div>
 
-      {/* Device Filters */}
-      <Card className="shadow-soft-sm border-border/50">
-        <CardContent className="py-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="relative">
-              <Input
-                placeholder="Search devices..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-9"
-              />
-            </div>
-            {/* Multi-device type selector */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={cn(
-                    "h-9 w-full rounded-md border px-3 text-left text-sm flex items-center justify-between",
-                    multiTypes.length > 0 && "border-[hsl(var(--aqua))] bg-[hsl(var(--aqua))]/5"
-                  )}
-                >
-                  <span className="truncate">
-                    {multiTypes.length === 0
-                      ? "All Device Types"
-                      : multiTypes
-                          .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
-                          .join(", ")}
-                  </span>
-                  <span className="text-xs opacity-60">{multiTypes.length === 0 ? "(All)" : `${multiTypes.length} selected`}</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-52">
-                {['pump','valve','tank','sump'].map(type => (
-                  <DropdownMenuCheckboxItem
-                    key={type}
-                    checked={multiTypes.includes(type)}
-                    onCheckedChange={(checked) => {
-                      setMultiTypes((prev) => {
-                        if (checked) return [...prev, type];
-                        return prev.filter((t) => t !== type);
-                      });
-                    }}
-                  >
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </DropdownMenuCheckboxItem>
-                ))}
-                <DropdownMenuCheckboxItem
-                  checked={multiTypes.length === 0}
-                  onCheckedChange={() => setMultiTypes([])}
-                >
-                  All Types
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-9"><SelectValue placeholder="Status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Organization Thresholds removed per request; moved to Settings page */}
-
-      {/* Device Grid segregated by type: Tanks → Valves → Pumps → Sumps */}
-      <div className="space-y-6">
-        {typeOrder.map((t) => {
-          const group = visibleDevices.filter((d) => d.type === t);
-          if (group.length === 0) return null;
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {filteredStats.map((stat) => {
+          const Icon = stat.icon;
           return (
-            <div key={t} className="space-y-3">
-              <h2 className="text-sm font-semibold text-soft flex items-center gap-2">
-                {groupTitles[t]}
-                <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium bg-[hsl(var(--aqua))]/10 text-[hsl(var(--aqua))] border-[hsl(var(--aqua))]/20">
-                  {group.length}
-                </span>
-              </h2>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {group.map((d) => (
-                  <DeviceCard key={d.id} {...d} />
-                ))}
-              </div>
-            </div>
+            <Card key={stat.label} className="shadow-elevation-2">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+                <Icon className={cn("h-4 w-4", stat.color)} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
 
-      {/* End device grid */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <BlockSelector
+              selectedBlocks={selectedBlocks}
+              onBlocksChange={setSelectedBlocks}
+            />
+            <div className="relative">
+              <Input
+                placeholder="Search devices..."
+                className="w-48"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="pump">Pumps</SelectItem>
+                <SelectItem value="valve">Valves</SelectItem>
+                <SelectItem value="tank">Tanks</SelectItem>
+                <SelectItem value="sump">Sumps</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="warning">Warning</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="error">Error</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {showFilterChip && (
+            <Badge
+              variant="secondary"
+              className="cursor-pointer gap-1 pl-2 pr-3 py-1 rounded-full text-xs font-normal hover:bg-secondary/80"
+              onClick={() => setSelectedBlocks([])}
+            >
+              <X className="h-3.5 w-3.5" />
+              Filters applied
+            </Badge>
+          )}
+        </div>
+
+        {/* Device Sections */}
+        {pumpDevices.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Pumps</h2>
+              <Badge variant="secondary">{pumpDevices.length}</Badge>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {pumpDevices.map((device) => (
+                <DeviceCard key={device.id} {...device} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {valveDevices.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Valves</h2>
+              <Badge variant="secondary">{valveDevices.length}</Badge>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {valveDevices.map((device) => (
+                <DeviceCard key={device.id} {...device} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tankDevices.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Tanks</h2>
+              <Badge variant="secondary">{tankDevices.length}</Badge>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {tankDevices.map((device) => (
+                <DeviceCard key={device.id} {...device} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {sumpDevices.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Sumps</h2>
+              <Badge variant="secondary">{sumpDevices.length}</Badge>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {sumpDevices.map((device) => (
+                <DeviceCard key={device.id} {...device} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {visibleDevices.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Activity className="h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold">No devices found</h3>
+            <p className="mt-2 text-muted-foreground">
+              Try adjusting your filters or create a new device.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Recent Activity Table */}
+      <Card className="shadow-elevation-2">
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Device</TableHead>
+                <TableHead>Action</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Time</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>
+                  <div className="font-medium">Pump A1</div>
+                  <div className="text-sm text-muted-foreground">DEV-001</div>
+                </TableCell>
+                <TableCell>Started</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                    Success
+                  </Badge>
+                </TableCell>
+                <TableCell>2 min ago</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <div className="font-medium">Tank T2</div>
+                  <div className="text-sm text-muted-foreground">DEV-002</div>
+                </TableCell>
+                <TableCell>Level Alert</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
+                    Warning
+                  </Badge>
+                </TableCell>
+                <TableCell>5 min ago</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <div className="font-medium">Valve V3</div>
+                  <div className="text-sm text-muted-foreground">DEV-003</div>
+                </TableCell>
+                <TableCell>Opened</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                    Success
+                  </Badge>
+                </TableCell>
+                <TableCell>10 min ago</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

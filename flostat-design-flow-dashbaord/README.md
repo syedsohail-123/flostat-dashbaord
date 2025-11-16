@@ -42,7 +42,7 @@ The frontend is built with:
 - Device management
 - User management
 - Scheduling
-- Reporting
+- Reporting (requires authentication)
 - SCADA interface
 - OCR functionality
 
@@ -84,7 +84,7 @@ The backend is built with:
 - Device management with parent-child relationships
 - Block management
 - Scheduling system
-- Reporting capabilities
+- Reporting capabilities (requires authentication)
 - Customer support system
 
 ### API Endpoints
@@ -111,7 +111,17 @@ npm install
 cp .env.example .env
 ```
 
-3. Start the development server:
+3. Configure AWS credentials:
+   
+   To fetch data from AWS DynamoDB, you need to add your AWS credentials to the `.env` file:
+   ```
+   AWS_ACCESS_KEY_ID=your_actual_access_key_id
+   AWS_SECRET_ACCESS_KEY=your_actual_secret_access_key
+   ```
+   
+   These credentials must have appropriate permissions to access the DynamoDB tables used by the application.
+
+4. Start the development server:
 ```bash
 npm start
 ```
@@ -135,6 +145,8 @@ If you don't need FCM notifications, you can skip this step. The application wil
 
 The frontend communicates with the backend through the API service (`src/lib/api.ts`) which handles all HTTP requests. Authentication is managed through the AuthContext (`src/contexts/AuthContext.tsx`).
 
+For the reporting functionality to work with real data instead of mock data, you need to be authenticated with the system. The report endpoints require a valid authentication token to access the data from DynamoDB.
+
 ### Environment Variables
 
 Frontend:
@@ -144,6 +156,8 @@ Backend:
 - `MONGODB` - MongoDB connection string
 - `DYNAMODB_LOCAL_ENDPOINT` - Local DynamoDB endpoint
 - `JWT_SECRET_KEY` - Secret key for JWT tokens
+- `AWS_ACCESS_KEY_ID` - AWS access key for DynamoDB access
+- `AWS_SECRET_ACCESS_KEY` - AWS secret key for DynamoDB access
 - Various AWS and table configuration variables
 
 ## Deployment
@@ -157,3 +171,5 @@ For production deployment, make sure to:
 2. Configure proper CORS settings
 3. Set up database connections
 4. Configure authentication secrets
+
+Note: The reporting functionality requires proper authentication to fetch real data from DynamoDB. Without authentication, the system will display mock data as a fallback.

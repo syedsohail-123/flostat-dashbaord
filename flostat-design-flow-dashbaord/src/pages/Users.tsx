@@ -10,9 +10,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Plus, Search, Edit, Trash2, Mail, Shield } from "lucide-react";
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
 const roleColors = {
   Admin: "bg-destructive/10 text-destructive border-destructive/20",
@@ -21,40 +38,161 @@ const roleColors = {
   Guest: "bg-muted text-muted-foreground border-border",
 } as const;
 
+// Updated User interface to match what we're storing
 interface User {
   id: string;
-  name: string;
   email: string;
-  role: "Admin" | "Pending Request" | "Controller" | "Guest";
-  lastActive: string;
-  department: string;
+  name: string;
+  role?: "Admin" | "Pending Request" | "Controller" | "Guest"; // Make role optional
+  lastActive?: string; // Make lastActive optional
+  department?: string; // Make department optional
+}
+
+interface EditUserModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onEditUser: (user: User) => void;
+  userToEdit: User | null;
+}
+
+function EditUserModal({ open, onOpenChange, onEditUser, userToEdit }: EditUserModalProps) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"Admin" | "Pending Request" | "Controller" | "Guest">("Pending Request");
+  const [department, setDepartment] = useState("");
+
+  // Populate form when userToEdit changes
+  useEffect(() => {
+    if (userToEdit) {
+      setName(userToEdit.name || "");
+      setEmail(userToEdit.email || "");
+      setRole(userToEdit.role || "Pending Request");
+      setDepartment(userToEdit.department || "");
+    } else {
+      // Reset form when closing
+      setName("");
+      setEmail("");
+      setRole("Pending Request");
+      setDepartment("");
+    }
+  }, [userToEdit, open]);
+
+  const handleSubmit = () => {
+    if (!email.trim() || !userToEdit) {
+      toast.error("Email is required");
+      return;
+    }
+
+    onEditUser({
+      ...userToEdit,
+      name,
+      email,
+      role,
+      department,
+    });
+
+    // Close modal
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit User</DialogTitle>
+          <DialogDescription>
+            Make changes to user details here. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Name
+            </Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="email" className="text-right">
+              Email
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="role" className="text-right">
+              Role
+            </Label>
+            <Select value={role} onValueChange={(value: any) => setRole(value)}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="Controller">Controller</SelectItem>
+                <SelectItem value="Guest">Guest</SelectItem>
+                <SelectItem value="Pending Request">Pending Request</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="department" className="text-right">
+              Department
+            </Label>
+            <Input
+              id="department"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" onClick={handleSubmit}>
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export default function Users() {
+  const { users: contextUsers } = useAuth(); // Get users from AuthContext
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [editUserOpen, setEditUserOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [contextUsers]); // Add contextUsers as dependency
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // In a real implementation, this would fetch from the backend
-      // const response = await apiService.getUsers("current-org-id");
-      // For now, we'll use mock data
-      const mockUsers: User[] = [
-        { id: "USR-001", name: "John Martinez", email: "john.m@flostat.io", role: "Admin", lastActive: "Active now", department: "Operations" },
-        { id: "USR-002", name: "Sarah Chen", email: "sarah.c@flostat.io", role: "Pending Request", lastActive: "5 min ago", department: "Engineering" },
-        { id: "USR-003", name: "Michael Roberts", email: "michael.r@flostat.io", role: "Controller", lastActive: "15 min ago", department: "Maintenance" },
-        { id: "USR-004", name: "Emily Davis", email: "emily.d@flostat.io", role: "Controller", lastActive: "1 hour ago", department: "Operations" },
-        { id: "USR-005", name: "David Kim", email: "david.k@flostat.io", role: "Admin", lastActive: "2 hours ago", department: "IT" },
-        { id: "USR-006", name: "Lisa Anderson", email: "lisa.a@flostat.io", role: "Guest", lastActive: "1 day ago", department: "Visitor" },
-        { id: "USR-007", name: "James Wilson", email: "james.w@flostat.io", role: "Controller", lastActive: "3 hours ago", department: "Quality Control" },
-      ];
-      setUsers(mockUsers);
+      // Use users from AuthContext and add default values for missing properties
+      const formattedUsers: User[] = contextUsers.map(user => ({
+        ...user,
+        role: user.role || "Pending Request", // Default to "Pending Request"
+        lastActive: user.lastActive || "Recently joined",
+        department: user.department || "Not assigned"
+      }));
+      
+      setUsers(formattedUsers);
     } catch (error) {
       toast.error("Failed to fetch users");
       console.error("Fetch users error:", error);
@@ -69,15 +207,26 @@ export default function Users() {
     toast.info("Add user functionality would be implemented here");
   };
 
-  const handleEditUser = async (userId: string) => {
-    // In a real implementation, this would open a modal or form to edit a user
-    // and then call the backend API to update the user
-    toast.info(`Edit user ${userId} functionality would be implemented here`);
+  const handleEditUser = async (updatedUser: User) => {
+    // In a real implementation, this would call the backend API to update the user
+    // For now, we'll just update it in the local state to demonstrate the functionality
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.id === updatedUser.id ? updatedUser : user
+      )
+    );
+    toast.success(`User ${updatedUser.email} updated successfully`);
   };
 
   const handleDeleteUser = async (userId: string) => {
-    // In a real implementation, this would call the backend API to delete the user
-    toast.info(`Delete user ${userId} functionality would be implemented here`);
+    // Find the user to delete
+    const userToDelete = users.find(user => user.id === userId);
+    if (userToDelete) {
+      // In a real implementation, this would call the backend API to delete the user
+      // For now, we'll just remove it from the local state to demonstrate the functionality
+      setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+      toast.success(`User ${userToDelete.email} deleted successfully`);
+    }
   };
 
   const filteredUsers = users.filter(user => 
@@ -147,40 +296,50 @@ export default function Users() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="font-semibold">User ID</TableHead>
-              <TableHead className="font-semibold">Name</TableHead>
               <TableHead className="font-semibold">Email</TableHead>
               <TableHead className="font-semibold">Role</TableHead>
-              <TableHead className="font-semibold">Department</TableHead>
-              <TableHead className="font-semibold">Last Active</TableHead>
-              <TableHead className="text-right font-semibold">Actions</TableHead>
+              <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="text-right font-semibold">Options</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredUsers.map((user) => (
               <TableRow key={user.id} className="hover:bg-muted/30">
-                <TableCell className="font-mono text-sm">{user.id}</TableCell>
-                <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Mail className="h-4 w-4" />
-                    <span className="text-sm">{user.email}</span>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span>{user.email}</span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={roleColors[user.role]}>
+                  <Badge variant="outline" className={roleColors[user.role || "Pending Request"]}>
                     <Shield className="mr-1 h-3 w-3" />
-                    {user.role}
+                    {user.role || "Pending Request"}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-muted-foreground">{user.department}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{user.lastActive}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <div className={`h-2 w-2 rounded-full ${user.lastActive === 'Active now' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-sm">{user.lastActive}</span>
+                  </div>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => handleEditUser(user.id)}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => {
+                        setUserToEdit(user);
+                        setEditUserOpen(true);
+                      }}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="destructive" size="icon" onClick={() => handleDeleteUser(user.id)}>
+                    <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      onClick={() => handleDeleteUser(user.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -190,6 +349,14 @@ export default function Users() {
           </TableBody>
         </Table>
       </div>
+      
+      {/* Edit User Modal */}
+      <EditUserModal
+        open={editUserOpen}
+        onOpenChange={setEditUserOpen}
+        onEditUser={handleEditUser}
+        userToEdit={userToEdit}
+      />
 
       {/* Summary cards moved above; removed from bottom */}
     </div>

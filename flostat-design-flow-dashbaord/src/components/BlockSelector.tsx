@@ -17,12 +17,11 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 
-const availableBlocks = [
-  { id: "block-a", name: "Block A", location: "Building A" },
-  { id: "block-b", name: "Block B", location: "Building B" },
-  { id: "block-c", name: "Block C", location: "Building C" },
-  { id: "block-d", name: "Block D", location: "Building D" },
-];
+interface Block {
+  id: string;
+  name: string;
+  location?: string;
+}
 
 interface BlockSelectorProps {
   selectedBlocks: string[];
@@ -42,122 +41,145 @@ export function BlockSelector({
   showFilterChip = false,
 }: BlockSelectorProps) {
   const [open, setOpen] = React.useState(false);
+  const [availableBlocks, setAvailableBlocks] = React.useState<Block[]>([]);
+
+  // Load blocks from localStorage
+  React.useEffect(() => {
+    const loadBlocks = () => {
+      const storedBlocks = localStorage.getItem('blocks');
+      if (storedBlocks) {
+        setAvailableBlocks(JSON.parse(storedBlocks));
+      } else {
+        // Default blocks if none exist
+        const defaultBlocks: Block[] = [
+          { id: "block-a", name: "Block A", location: "Building A" },
+          { id: "block-b", name: "Block B", location: "Building B" },
+        ];
+        setAvailableBlocks(defaultBlocks);
+        localStorage.setItem('blocks', JSON.stringify(defaultBlocks));
+      }
+    };
+
+    // Load blocks initially
+    loadBlocks();
+
+    // Listen for storage changes from other parts of the app
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'blocks') {
+        loadBlocks();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Cleanup listener
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Also listen for custom events within the same tab
+  React.useEffect(() => {
+    const handleBlocksUpdate = () => {
+      const storedBlocks = localStorage.getItem('blocks');
+      if (storedBlocks) {
+        setAvailableBlocks(JSON.parse(storedBlocks));
+      }
+    };
+
+    window.addEventListener('blocksUpdated', handleBlocksUpdate);
+    
+    // Cleanup listener
+    return () => {
+      window.removeEventListener('blocksUpdated', handleBlocksUpdate);
+    };
+  }, []);
 
   const toggleBlock = (blockId: string) => {
-    const newSelection = selectedBlocks.includes(blockId)
-      ? selectedBlocks.filter((id) => id !== blockId)
-      : [...selectedBlocks, blockId];
+    // Find the block name by ID
+    const block = availableBlocks.find(b => b.id === blockId);
+    if (!block) return;
+    
+    const blockName = block.name;
+    const newSelection = selectedBlocks.includes(blockName)
+      ? selectedBlocks.filter((name) => name !== blockName)
+      : [...selectedBlocks, blockName];
     onBlocksChange(newSelection);
   };
 
-  const removeBlock = (blockId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    onBlocksChange(selectedBlocks.filter((id) => id !== blockId));
+  const clearAll = () => {
+    onBlocksChange([]);
   };
 
-  const displayText =
-    selectedBlocks.length === 0
-      ? "All Blocks"
-      : selectedBlocks.length === availableBlocks.length
-      ? "All Blocks"
-      : `${selectedBlocks.length} Block${selectedBlocks.length > 1 ? 's' : ''}`;
-
-  const selectedBlockNames = selectedBlocks
-    .map((id) => availableBlocks.find((b) => b.id === id)?.name)
-    .filter(Boolean)
-    .join(", ");
+  // Find block names for display
+  const getBlockName = (blockName: string) => {
+    // In this updated version, we're passing block names, not IDs
+    return blockName;
+  };
 
   return (
-    <div className={cn("flex items-center gap-3", className)}>
-      <div className="flex flex-col gap-2">
-        {label && !compact && <label className="text-sm font-medium">{label}</label>}
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className={cn(
-                "justify-between hover:bg-muted/50",
-                compact ? "h-9 w-[180px]" : "w-[240px]"
-              )}
-            >
-              <span className="truncate text-sm">{displayText}</span>
-              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[260px] p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Search blocks..." className="h-9" />
-              <CommandList>
-                <CommandEmpty>No blocks found.</CommandEmpty>
-                <CommandGroup>
-                  {availableBlocks.map((block) => (
-                    <CommandItem
-                      key={block.id}
-                      value={block.name}
-                      onSelect={() => toggleBlock(block.id)}
-                      className="cursor-pointer"
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedBlocks.includes(block.id)
-                            ? "opacity-100 text-[hsl(var(--aqua))]"
-                            : "opacity-0"
-                        )}
-                      />
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">{block.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {block.location}
-                        </span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {showFilterChip && selectedBlocks.length > 0 && selectedBlocks.length < availableBlocks.length && (
+    <div className={cn("flex items-center gap-2", className)}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "justify-between bg-background",
+              compact ? "h-8 px-2 text-xs" : "h-9 px-3"
+            )}
+          >
+            <span className="truncate">
+              {selectedBlocks.length > 0
+                ? `${selectedBlocks.length} ${label}${selectedBlocks.length !== 1 ? "s" : ""} selected`
+                : `Select ${label}${compact ? "" : "s"}`}
+            </span>
+            <ChevronDown className={cn("ml-2 h-4 w-4 shrink-0 opacity-50", compact ? "h-3 w-3" : "")} />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[200px] p-0">
+          <Command>
+            <CommandInput placeholder={`Search ${label.toLowerCase()}s...`} />
+            <CommandList>
+              <CommandEmpty>No {label.toLowerCase()} found.</CommandEmpty>
+              <CommandGroup>
+                {availableBlocks.map((block) => (
+                  <CommandItem
+                    key={block.id}
+                    value={block.name}
+                    onSelect={() => toggleBlock(block.id)}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        selectedBlocks.includes(block.name) ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <div className="flex flex-col">
+                      <span>{block.name}</span>
+                      {block.location && (
+                        <span className="text-xs text-muted-foreground">{block.location}</span>
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {showFilterChip && selectedBlocks.length > 0 && (
         <Badge
-          variant="outline"
-          className="gap-2 bg-[hsl(var(--aqua))]/10 text-[hsl(var(--aqua))] border-[hsl(var(--aqua))]/30 px-3 py-1 text-xs font-medium"
+          variant="secondary"
+          className="cursor-pointer gap-1 pl-2 pr-3 py-1 rounded-full text-xs font-normal hover:bg-secondary/80"
+          onClick={clearAll}
         >
-          Filtered by: {selectedBlockNames}
-          <X
-            className="h-3 w-3 cursor-pointer hover:opacity-70"
-            onClick={() => onBlocksChange([])}
-          />
+          <X className="h-3.5 w-3.5" />
+          {selectedBlocks.length} {label}
+          {selectedBlocks.length !== 1 ? "s" : ""} selected
         </Badge>
-      )}
-
-      {!showFilterChip && selectedBlocks.length > 0 && selectedBlocks.length < availableBlocks.length && !compact && (
-        <div className="flex flex-wrap gap-2">
-          {selectedBlocks.map((blockId) => {
-            const block = availableBlocks.find((b) => b.id === blockId);
-            if (!block) return null;
-            return (
-              <Badge
-                key={block.id}
-                variant="outline"
-                className="gap-1 bg-[hsl(var(--aqua))]/10 text-[hsl(var(--aqua))] border-[hsl(var(--aqua))]/30 hover:bg-[hsl(var(--aqua))]/20"
-              >
-                {block.name}
-                <X
-                  className="h-3 w-3 cursor-pointer"
-                  onClick={(e) => removeBlock(block.id, e)}
-                />
-              </Badge>
-            );
-          })}
-        </div>
       )}
     </div>
   );
 }
-
-export { availableBlocks };

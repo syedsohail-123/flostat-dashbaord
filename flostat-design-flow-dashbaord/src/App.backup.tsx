@@ -28,8 +28,8 @@ function AppShell() {
   const shelllessRoutes = ["/", "/signin", "/signup", "/organizations"] as const;
   const isShellless = shelllessRoutes.some((p) => p === location.pathname);
 
-  // Redirect authenticated users from root path to dashboard, but allow access to signin/signup
-  if (isAuthenticated && location.pathname === "/") {
+  // Redirect authenticated users from auth pages to dashboard
+  if (isAuthenticated && (location.pathname === "/" || location.pathname === "/signin" || location.pathname === "/signup")) {
     return <Navigate to="/dashboard" replace />;
   }
 

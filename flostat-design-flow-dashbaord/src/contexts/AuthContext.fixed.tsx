@@ -26,7 +26,7 @@ interface SignupData {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (data: SignupData) => Promise<{ success: boolean; error?: string }>;
+  signup: (data: SignupData) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   users: User[]; // Add users array to store all users

@@ -53,14 +53,21 @@ export default function SignUp() {
       setIsLoading(true);
       // In a real implementation, this would call the API to create a new user
       // For now, we'll just simulate the signup and navigate to the dashboard
-      const success = await signup({ email, password, name: `${firstName} ${lastName}` });
+      const success = await signup({ 
+        email, 
+        password, 
+        firstName: middleName ? `${firstName} ${middleName}` : firstName,
+        lastName,
+        conformPassword: confirmPassword
+        // contactNumber is optional
+      });
       if (success) {
         toast.success("Account created successfully!");
-        navigate('/dashboard');
+        navigate('/organizations');
       } else {
         toast.error("Failed to create account. Please try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup failed:", error);
       toast.error("An error occurred during signup. Please try again.");
     } finally {

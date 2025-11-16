@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
-import { OrganizationSelector } from "@/components/OrganizationSelector";
 
 import {
   Sidebar,
@@ -42,7 +41,7 @@ const navigationItems = [
 
 export function AppSidebar() {
   const { open } = useSidebar();
-  const { logout, user, currentOrganization } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -70,14 +69,6 @@ export function AppSidebar() {
             </div>
           )}
         </div>
-        {open && currentOrganization && (
-          <div className="mt-4">
-            <div className="text-xs text-sidebar-foreground/70 mb-1">Current Organization</div>
-            <div className="text-sm font-medium text-sidebar-foreground truncate">
-              {currentOrganization.name}
-            </div>
-          </div>
-        )}
       </SidebarHeader>
 
       <SidebarContent>
@@ -106,32 +97,15 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        
-        {/* Organization selector */}
-        {open && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/70 text-xs font-semibold uppercase tracking-wider px-3">
-              Organization
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <div className="px-3 py-2">
-                <OrganizationSelector />
-              </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-        
         {/* Profile / Sign out section at bottom */}
         <div className="mt-auto p-3 border-t border-sidebar-border space-y-2">
           {/* Profile (non-link) */}
           <div className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/80">
-            <div className="h-8 w-8 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center font-semibold">
-              {user?.name ? user.name.charAt(0) : 'U'}
-            </div>
-            {open && user && (
+            <div className="h-8 w-8 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center font-semibold">FG</div>
+            {open && (
               <div className="flex-1">
-                <div className="text-sm font-medium truncate">{user.name}</div>
-                <div className="text-xs text-sidebar-foreground/70 truncate">{user.email}</div>
+                <div className="text-sm font-medium">Souvik Ghosh</div>
+                <div className="text-xs text-sidebar-foreground/70">Admin</div>
               </div>
             )}
           </div>

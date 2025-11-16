@@ -10,10 +10,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Plus, RotateCw, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 interface ScheduleEvent {
   id: string;
@@ -138,6 +158,15 @@ const events: ScheduleEvent[] = [
   },
 ];
 
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  deviceId: z.string().min(1, "Device is required"),
+  startHour: z.coerce.number().min(0).max(24),
+  durationHours: z.coerce.number().min(0.25).max(24),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
 export default function Schedule() {
   const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>("all");
@@ -148,6 +177,7 @@ export default function Schedule() {
   const [windowStart, setWindowStart] = useState<number>(12);
   const [windowEnd, setWindowEnd] = useState<number>(18);
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>(events);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Live 'now' time, updates periodically for the moving timeline
   const [now, setNow] = useState<Date>(new Date());
@@ -158,6 +188,16 @@ export default function Schedule() {
   }, []);
   const currentHour = now.getHours() + now.getMinutes() / 60;
   const hours = Array.from({ length: windowEnd - windowStart + 1 }, (_, i) => windowStart + i);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      deviceId: "",
+      startHour: 12,
+      durationHours: 1,
+    },
+  });
 
   useEffect(() => {
     fetchSchedule();
@@ -203,9 +243,34 @@ export default function Schedule() {
     toast.success("Schedule refreshed");
   };
 
-  const handleAddSchedule = async () => {
-    // In a real implementation, this would open a modal to add a new schedule
-    toast.info("Add schedule functionality would be implemented here");
+  const handleAddSchedule = () => {
+    // Open the create schedule modal
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCreateSchedule = (data: FormValues) => {
+    // Create a new schedule event
+    const newEvent: ScheduleEvent = {
+      id: `evt-${Date.now()}`,
+      title: data.title,
+      device: devices.find(d => d.id === data.deviceId)?.name || "Unknown Device",
+      startHour: data.startHour,
+      durationHours: data.durationHours,
+      status: "scheduled",
+      deviceId: data.deviceId,
+    };
+
+    // Add to the schedule events
+    setScheduleEvents(prev => [...prev, newEvent]);
+    
+    // Close the modal
+    setIsCreateModalOpen(false);
+    
+    // Reset the form
+    form.reset();
+    
+    // Show success message
+    toast.success("Schedule created successfully");
   };
 
   // keyboard navigation across events
@@ -229,6 +294,97 @@ export default function Schedule() {
 
   return (
     <div className="space-y-4 animate-fadeIn" tabIndex={0} onKeyDown={handleKeyNav}>
+      {/* Create Schedule Modal */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create Schedule</DialogTitle>
+            <DialogDescription>
+              Create a new schedule for a device. Set the time and duration for the scheduled event.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleCreateSchedule)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Schedule title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="deviceId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Device</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a device" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {devices.map((device) => (
+                          <SelectItem key={device.id} value={device.id}>
+                            {device.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="startHour"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Hour</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="0" max="24" step="0.25" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="durationHours"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration (hours)</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="0.25" max="24" step="0.25" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Create Schedule</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
       {/* Top Toolbar */}
       <Card className="bg-gradient-card shadow-soft-lg border-border/50">
         <CardHeader className="border-b border-border/50 bg-secondary/5 p-4 transition-smooth">
