@@ -17,6 +17,12 @@ export default defineConfig(({ mode }) => ({
     }
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+   optimizeDeps: {
+    include: [
+      "@aws-crypto/sha256-browser",
+      "@aws-sdk/util-hex-encoding"
+    ],
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

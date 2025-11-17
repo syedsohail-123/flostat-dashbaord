@@ -19,6 +19,8 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Organizations from "./pages/Organizations.tsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { useEffect } from "react";
+import { startWebSocket, stopWebSocket, subscribe } from "./utils/webSocketService.ts";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +29,13 @@ function AppShell() {
   const { isAuthenticated } = useAuth();
   const shelllessRoutes = ["/", "/signin", "/signup", "/organizations"] as const;
   const isShellless = shelllessRoutes.some((p) => p === location.pathname);
-
+    useEffect(()=>{
+    startWebSocket();
+    subscribe("pump/status");
+    return ()=>{
+      stopWebSocket();
+    };
+  },[])
   // Redirect authenticated users from root path to dashboard, but allow access to signin/signup
   if (isAuthenticated && location.pathname === "/") {
     return <Navigate to="/dashboard" replace />;

@@ -66,7 +66,7 @@ class ApiService {
       body: JSON.stringify(credentials),
     });
     
-    console.log("Login response status:", response.status);
+    console.log("Login response status:", response);
     console.log("Login response headers:", response.headers);
     
     if (!response.ok) {
