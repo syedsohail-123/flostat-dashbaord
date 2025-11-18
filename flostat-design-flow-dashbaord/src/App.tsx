@@ -38,7 +38,7 @@ function AppShell() {
   },[])
   // Redirect authenticated users from root path to dashboard, but allow access to signin/signup
   if (isAuthenticated && location.pathname === "/") {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/organizations" replace />;
   }
 
   // Redirect unauthenticated users from protected pages to signup
