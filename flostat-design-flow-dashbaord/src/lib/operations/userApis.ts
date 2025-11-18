@@ -102,7 +102,7 @@ export const getAllOrgsOfUser = async (
     });
 
     const response: ApiResponse = res.data;
-
+    console.log("Response : ",response)
     if (!response.success) {
       toast.error(response.message || "Failed to fetch organizations");
       return null;

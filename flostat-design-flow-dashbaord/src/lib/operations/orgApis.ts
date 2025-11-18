@@ -7,8 +7,11 @@ import { apiClient } from "../httpClient";
 
 // ------------------ TYPES ------------------
 export interface Org {
-  id: string;
-  name: string;
+  email: string;
+  laptop_fcm?: string;
+  orgName: string;
+  status: string;
+  org_id: string;
   description?: string;
 }
 

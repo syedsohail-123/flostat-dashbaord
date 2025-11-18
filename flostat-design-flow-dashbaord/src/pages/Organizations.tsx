@@ -5,8 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
-import { apiService } from "@/lib/api";
 import { toast } from "sonner";
+import { getAllOrgsOfUser } from "@/lib/operations/userApis";
+import { RootState } from "@/store";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { setUserOrgs } from "@/slice/userSlice";
+
 
 interface Org {
   id: string;
@@ -17,35 +22,35 @@ interface Org {
 
 export default function Organizations() {
   const [open, setOpen] = useState(false);
-  const [orgs, setOrgs] = useState<Org[]>([]);
-  const [loading, setLoading] = useState(true);
+const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [loc, setLoc] = useState("");
   const navigate = useNavigate();
+  const token = useSelector((state: RootState)=>state.auth.token);
+  const userOrgs = useSelector((state: RootState)=>state.user.userOrgs);
+  console.log("User org in redux: ",userOrgs);
+  // useEffect(() => {
+  //   if(token){
+  //     fetchOrganizations();
+  //   }
+  // }, [token]);
 
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
-
-  const fetchOrganizations = async () => {
-    try {
-      setLoading(true);
-      // In a real implementation, this would fetch from the backend
-      // const response = await apiService.getOrganizations();
-      // For now, we'll use mock data
-      const mockOrgs = [
-        { id: "1", name: "Main Building", description: "Primary facility", location: "Downtown" },
-        { id: "2", name: "Warehouse", description: "Storage facility", location: "Industrial Area" },
-      ];
-      setOrgs(mockOrgs);
-    } catch (error) {
-      toast.error("Failed to fetch organizations");
-      console.error("Fetch organizations error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchOrganizations = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const result  = await getAllOrgsOfUser(token);
+  //     console.log("Orgs of the user: ",result);
+  //     dispatch(setUserOrgs(result));
+      
+  //   } catch (error) {
+  //     toast.error("Failed to fetch organizations");
+  //     console.error("Fetch organizations error:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const onCreate = async () => {
     if (!name.trim()) {
@@ -71,11 +76,6 @@ export default function Organizations() {
         location: loc
       };
       
-      setOrgs((prev) => [...prev, newOrg]);
-      setName(""); 
-      setDesc(""); 
-      setLoc(""); 
-      setOpen(false);
       toast.success("Organization created successfully");
     } catch (error) {
       toast.error("Failed to create organization");
@@ -111,15 +111,15 @@ export default function Organizations() {
         </button>
 
         {/* Existing orgs */}
-        {orgs.map((o) => (
-          <Card key={o.id} className="shadow-soft-sm">
+        {userOrgs?.map((o) => (
+          <Card key={o.org_id} className="shadow-soft-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">{o.name}</CardTitle>
+              <CardTitle className="text-base">{o.orgName}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {o.description && <p className="text-sm text-soft-muted">{o.description}</p>}
-              {o.location && <p className="text-xs text-soft-muted">Location: {o.location}</p>}
-              <Button className="mt-2 w-full bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white" onClick={() => handleSelectOrg(o.id)}>Enter Dashboard</Button>
+              {o.role && <p className="text-sm text-soft-muted">Your Role: {o.role}</p>}
+              {o.status && <p className="text-xs text-soft-muted">Status: {o.status}</p>}
+              <Button className="mt-2 w-full bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white" onClick={() => handleSelectOrg(o.org_id)}>Enter Dashboard</Button>
             </CardContent>
           </Card>
         ))}

@@ -2,7 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Dashboard from "./pages/Dashboard";
@@ -20,22 +26,33 @@ import SignUp from "./pages/SignUp";
 import Organizations from "./pages/Organizations.tsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { useEffect } from "react";
-import { startWebSocket, stopWebSocket, subscribe } from "./utils/webSocketService.ts";
+import {
+  startWebSocket,
+  stopWebSocket,
+  subscribe,
+} from "./utils/webSocketService.ts";
+import { Provider } from "react-redux";
+import { store } from "./store.ts";
 
 const queryClient = new QueryClient();
 
 function AppShell() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
-  const shelllessRoutes = ["/", "/signin", "/signup", "/organizations"] as const;
+  const shelllessRoutes = [
+    "/",
+    "/signin",
+    "/signup",
+    "/organizations",
+  ] as const;
   const isShellless = shelllessRoutes.some((p) => p === location.pathname);
-    useEffect(()=>{
+  useEffect(() => {
     startWebSocket();
     subscribe("pump/status");
-    return ()=>{
+    return () => {
       stopWebSocket();
     };
-  },[])
+  }, []);
   // Redirect authenticated users from root path to dashboard, but allow access to signin/signup
   if (isAuthenticated && location.pathname === "/") {
     return <Navigate to="/organizations" replace />;
@@ -94,11 +111,13 @@ const App = () => (
   <AuthProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppShell />
-        </BrowserRouter>
+        <Provider store={store}>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppShell />
+          </BrowserRouter>
+        </Provider>
       </TooltipProvider>
     </QueryClientProvider>
   </AuthProvider>
