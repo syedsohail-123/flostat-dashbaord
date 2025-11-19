@@ -1,6 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiService } from '@/lib/api';
 import { toast } from 'sonner';
+import { Org } from '@/lib/operations/orgApis';
+import { store } from '@/store';
+import { setUserOrgs } from '@/slice/userSlice';
+import { setToken } from '@/slice/authSlice';
 
 interface User {
   id: string;
@@ -34,7 +38,7 @@ interface AuthContextType {
   devices: any[]; // Store devices
   addDevice: (device: any) => void; // Add function to add devices
   authToken: string | null; // Add authToken to context
-  organizations: Organization[]; // Add organizations array
+  organizations: Org[]; // Add organizations array
   currentOrganization: Organization | null; // Add current organization
   setCurrentOrganization: (org: Organization | null) => void; // Add function to set current organization
 }
@@ -45,8 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null); // Store auth token
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
+  const [organizations, setOrganizations] = useState<Org[]>([]);
+  const [currentOrganization, setCurrentOrganization] = useState<Org | null>(null);
   const [users, setUsers] = useState<User[]>(() => {
     // Initialize with any existing users from localStorage
     const savedUsers = localStorage.getItem('users');
@@ -65,8 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log("AuthContext: Initializing with stored data:", { token: !!token, userData: !!userData });
     
     if (token && userData) {
+      console.log("Token in auth provider: ",token)
       setAuthToken(token);
       setUser(JSON.parse(userData));
+      store.dispatch(setToken(token));
       setIsAuthenticated(true);
       // Set the token in the API service
       apiService.setAuthToken(token);
@@ -90,19 +96,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("AuthContext: Organizations response:", response);
       
       if (response.success && response.orgs) {
-        const orgs: Organization[] = response.orgs.map((org: any) => ({
-          org_id: org.org_id,
-          name: org.org_name || org.name || 'Unnamed Organization',
-          role: org.role
-        }));
+        const orgs: Org[] = response.orgs;
         
         console.log("AuthContext: Processed organizations:", orgs);
-        setOrganizations(orgs);
+        store.dispatch(setUserOrgs(orgs))
         
         // Set the first organization as current if none is set
         if (orgs.length > 0 && !currentOrganization) {
           console.log("AuthContext: Setting first organization as current");
-          setCurrentOrganization(orgs[0]);
+         
         } else if (orgs.length === 0) {
           console.log("AuthContext: No organizations found for user");
           toast.info("No organizations found for your account. Please contact your administrator.");

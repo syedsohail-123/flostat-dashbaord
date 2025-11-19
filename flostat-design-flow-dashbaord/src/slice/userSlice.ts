@@ -2,11 +2,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface UserState {
-  userOrgs: any[] | null;
+  userOrgs: any[] | [];
 }
 
 const initialState: UserState = {
-  userOrgs: null,
+  userOrgs: [],
 };
 
 const userSlice = createSlice({

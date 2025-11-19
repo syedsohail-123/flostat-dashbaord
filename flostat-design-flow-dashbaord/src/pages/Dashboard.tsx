@@ -31,6 +31,12 @@ import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { getOrgTopics } from "@/lib/operations/orgApis";
+import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setTopics } from "@/slice/webSocketSlice";
 
 // Add state to store devices
 const initialDevices = [
@@ -210,7 +216,26 @@ export default function Dashboard() {
   const [tank4Level, setTank4Level] = useState<number>(1);
   const [tankStaffLevel, setTankStaffLevel] = useState<number>(4);
   const [tankAHubLevel, setTankAHubLevel] = useState<number>(23);
-
+  const dispatch = useDispatch();
+  const org_id = useSelector((state: RootState)=> state.org.org_id);
+  const token = useSelector((state: RootState)=> state.auth.token);
+  console.log("Token :",token)
+  // fetch topics of the org
+  useEffect(()=>{
+    const fetchTopicsOfOrg = async(org_id)=>{
+       const result = await getOrgTopics(org_id,token);
+       console.log("Result topic fetch : ",result);
+       if(result){
+        dispatch(setTopics(result));
+       }
+    }
+    if(org_id && token){
+      fetchTopicsOfOrg(org_id);
+    }else{
+      console.error("Missing: ",token,org_id)
+      toast.error("Missing params like org_id or token ");
+    }
+  },[org_id])
   // Load devices from localStorage when component mounts
   useEffect(() => {
     const loadDevicesFromStorage = () => {
