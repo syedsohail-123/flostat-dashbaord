@@ -22,10 +22,10 @@ export interface User {
   role: string;
 }
 
-export interface Topic {
-  id: string;
-  name: string;
-}
+// export interface Topic {
+//   id: string;
+//   name: string;
+// }
 
 export interface Log {
   id: string;
@@ -258,7 +258,7 @@ export const deleteOrg = async (
 export const getOrgTopics = async (
   org_id: string,
   token: string
-): Promise<Topic[] | null> => {
+): Promise<string[] | null> => {
   const toastId = toast.loading("Fetching topics...");
   const url = orgEndpoints.GET_ORG_TOPICS.replace(":org_id", org_id);
 

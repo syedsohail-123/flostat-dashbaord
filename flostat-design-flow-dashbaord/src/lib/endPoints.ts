@@ -1,5 +1,6 @@
 // src/httpClient/endpoints.ts
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+const BASE_URL = BASE+"/api/v1";
 
 export const authEndpoints = {
   SEND_OTP_API: `${BASE_URL}/auth/sendOtp`,

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Org } from '@/lib/operations/orgApis';
 import { store } from '@/store';
 import { setUserOrgs } from '@/slice/userSlice';
+import { setToken } from '@/slice/authSlice';
 
 interface User {
   id: string;
@@ -68,8 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log("AuthContext: Initializing with stored data:", { token: !!token, userData: !!userData });
     
     if (token && userData) {
+      console.log("Token in auth provider: ",token)
       setAuthToken(token);
       setUser(JSON.parse(userData));
+      store.dispatch(setToken(token));
       setIsAuthenticated(true);
       // Set the token in the API service
       apiService.setAuthToken(token);

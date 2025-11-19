@@ -11,6 +11,7 @@ import { RootState } from "@/store";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { setUserOrgs } from "@/slice/userSlice";
+import { setOrgId } from "@/slice/orgSlice";
 
 
 interface Org {
@@ -86,6 +87,9 @@ const dispatch = useDispatch();
   const handleSelectOrg = (orgId: string) => {
     // In a real implementation, you would store the selected organization
     // For now, we'll just navigate to the dashboard
+    // first select org_id save to redux then navigate
+    console.log("Org id selected: ",orgId);
+    dispatch(setOrgId(orgId));
     navigate('/dashboard');
   };
 
