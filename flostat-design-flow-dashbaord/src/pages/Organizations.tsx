@@ -32,26 +32,27 @@ const dispatch = useDispatch();
   const token = useSelector((state: RootState)=>state.auth.token);
   const userOrgs = useSelector((state: RootState)=>state.user.userOrgs);
   console.log("User org in redux: ",userOrgs);
-  // useEffect(() => {
-  //   if(token){
-  //     fetchOrganizations();
-  //   }
-  // }, [token]);
+  useEffect(() => {
+    if(token){
+      fetchOrganizations();
+    }
+  }, [token]);
 
-  // const fetchOrganizations = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const result  = await getAllOrgsOfUser(token);
-  //     console.log("Orgs of the user: ",result);
-  //     dispatch(setUserOrgs(result));
-      
-  //   } catch (error) {
-  //     toast.error("Failed to fetch organizations");
-  //     console.error("Fetch organizations error:", error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const fetchOrganizations = async () => {
+    try {
+      setLoading(true);
+      const result = await getAllOrgsOfUser(token);
+      console.log("Orgs of the user: ",result);
+      if (result) {
+        dispatch(setUserOrgs(result));
+      }
+    } catch (error) {
+      toast.error("Failed to fetch organizations");
+      console.error("Fetch organizations error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const onCreate = async () => {
     if (!name.trim()) {
@@ -66,18 +67,25 @@ const dispatch = useDispatch();
         location: loc
       };
 
-      // In a real implementation, this would call the backend
-      // const response = await apiService.createOrganization(orgData);
+      // Call the API service to create organization
+      const response = await apiService.createOrganization(orgData);
       
-      // For now, we'll simulate the creation
-      const newOrg = {
-        id: Math.random().toString(36).slice(2),
-        name,
-        description: desc,
-        location: loc
-      };
-      
-      toast.success("Organization created successfully");
+      if (response.success) {
+        toast.success("Organization created successfully");
+        
+        // Close the dialog
+        setOpen(false);
+        
+        // Reset form
+        setName("");
+        setDesc("");
+        setLoc("");
+        
+        // Fetch updated organizations
+        await fetchOrganizations();
+      } else {
+        throw new Error(response.message || "Failed to create organization");
+      }
     } catch (error) {
       toast.error("Failed to create organization");
       console.error("Create organization error:", error);
