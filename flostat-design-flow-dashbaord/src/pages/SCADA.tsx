@@ -7,13 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Activity, Droplets, Gauge, ThermometerSun, Power, AlertTriangle, Settings, Waves, Container } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { BlockSelector } from "@/components/BlockSelector";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiService } from "@/lib/api";
@@ -55,24 +49,24 @@ const sumps = [
 ];
 
 const initialDevices = [
-  { id: 1, name: "Valve 3", type: "valve", status: "active" as const, value: 100, unit: "%", isOn: true, location: "Building A - Floor 1" },
-  { id: 2, name: "Valve 1", type: "valve", status: "active" as const, value: 100, unit: "%", isOn: true, location: "Building A - Floor 2" },
-  { id: 3, name: "Valve 4", type: "valve", status: "active" as const, value: 100, unit: "%", isOn: true, location: "Building B - Ground" },
-  { id: 4, name: "Valve 2", type: "valve", status: "inactive" as const, value: 0, unit: "%", isOn: false, location: "Building B - Floor 1" },
-  { id: 5, name: "Pump 2", type: "pump", status: "active" as const, value: 2900, unit: "RPM", isOn: true, location: "Building C - Floor 1" },
-  { id: 6, name: "Pump 1", type: "pump", status: "inactive" as const, value: 0, unit: "RPM", isOn: false, location: "Building C - Ground" },
-  { id: 7, name: "Pump AHub", type: "pump", status: "active" as const, value: 3100, unit: "RPM", isOn: true, location: "Building D - Floor 1" },
-  { id: 8, name: "Pump 3", type: "pump", status: "active" as const, value: 2850, unit: "RPM", isOn: true, location: "Building D - Floor 2" },
-  { id: 9, name: "Tank 4", type: "tank", status: "inactive" as const, value: 1, unit: "%", isOn: true, location: "Storage A" },
-  { id: 10, name: "Tank Staff quarters", type: "tank", status: "warning" as const, value: 4, unit: "%", isOn: true, location: "Storage B" },
-  { id: 11, name: "Tank AHub", type: "tank", status: "warning" as const, value: 23, unit: "%", isOn: true, location: "Storage C" },
-  { id: 12, name: "Tank 4", type: "tank", status: "active" as const, value: 100, unit: "%", isOn: true, location: "Storage D" },
+  { id: 1, name: "Valve 3", type: "valve", status: "active" as const, value: 100, unit: "%", isOn: true, location: "Building A - Floor 1", block: "Block A" },
+  { id: 2, name: "Valve 1", type: "valve", status: "active" as const, value: 100, unit: "%", isOn: true, location: "Building A - Floor 2", block: "Block A" },
+  { id: 3, name: "Valve 4", type: "valve", status: "active" as const, value: 100, unit: "%", isOn: true, location: "Building B - Ground", block: "Block B" },
+  { id: 4, name: "Valve 2", type: "valve", status: "inactive" as const, value: 0, unit: "%", isOn: false, location: "Building B - Floor 1", block: "Block B" },
+  { id: 5, name: "Pump 2", type: "pump", status: "active" as const, value: 2900, unit: "RPM", isOn: true, location: "Building C - Floor 1", block: "Block C" },
+  { id: 6, name: "Pump 1", type: "pump", status: "inactive" as const, value: 0, unit: "RPM", isOn: false, location: "Building C - Ground", block: "Block C" },
+  { id: 7, name: "Pump AHub", type: "pump", status: "active" as const, value: 3100, unit: "RPM", isOn: true, location: "Building D - Floor 1", block: "Block D" },
+  { id: 8, name: "Pump 3", type: "pump", status: "active" as const, value: 2850, unit: "RPM", isOn: true, location: "Building D - Floor 2", block: "Block D" },
+  { id: 9, name: "Tank 4", type: "tank", status: "inactive" as const, value: 1, unit: "%", isOn: true, location: "Storage A", block: "Block A" },
+  { id: 10, name: "Tank Staff quarters", type: "tank", status: "warning" as const, value: 4, unit: "%", isOn: true, location: "Storage B", block: "Block A" },
+  { id: 11, name: "Tank AHub", type: "tank", status: "warning" as const, value: 23, unit: "%", isOn: true, location: "Storage C", block: "Block D" },
+  { id: 12, name: "Tank 4", type: "tank", status: "active" as const, value: 100, unit: "%", isOn: true, location: "Storage D", block: "Block D" },
 ];
 
 export default function SCADA() {
   const [devices, setDevices] = useState(initialDevices);
   const [selectedDevice, setSelectedDevice] = useState<typeof initialDevices[0] | null>(null);
-  const [selectedBlock, setSelectedBlock] = useState<string>("all");
+  const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
   // SCADA operating mode: 'auto' disables manual device interaction; 'manual' enables it.
   const [scadaMode, setScadaMode] = useState<'auto' | 'manual'>("auto");
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
@@ -161,20 +155,11 @@ export default function SCADA() {
           <p className="text-muted-foreground mt-1">Real-time monitoring and control interface</p>
         </div>
         <div className="flex gap-3 items-center">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Select Block:</label>
-            <Select value={selectedBlock} onValueChange={setSelectedBlock}>
-              <SelectTrigger className="w-[140px] h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Blocks</SelectItem>
-                <SelectItem value="block-a">Block A</SelectItem>
-                <SelectItem value="block-b">Block B</SelectItem>
-                <SelectItem value="block-c">Block C</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <BlockSelector
+            selectedBlocks={selectedBlocks}
+            onBlocksChange={setSelectedBlocks}
+            label="Block"
+          />
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Mode:</label>
             <ToggleGroup
@@ -357,7 +342,13 @@ export default function SCADA() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
-              {devices.map(device => {
+              {devices
+                .filter((device) => {
+                  // Filter devices based on selected blocks
+                  if (selectedBlocks.length === 0) return true;
+                  return selectedBlocks.includes(device.block || '');
+                })
+                .map(device => {
                 const isExpanded = expanded.has(device.id);
                 const interactionDisabled = scadaMode === 'auto';
                 const panelId = `device-panel-${device.id}`;
@@ -365,23 +356,23 @@ export default function SCADA() {
                   <div
                     key={device.id}
                     className={`border rounded-md transition-all ${selectedDevice?.id === device.id ? 'ring-2 ring-[hsl(var(--aqua))] bg-muted/40' : 'bg-card'} hover:bg-muted/30 ${interactionDisabled ? 'opacity-60' : ''}`}
-                  > 
+                  >
                     {/* Header Row */}
-                    <button
-                      type="button"
-                      onClick={() => { toggleExpand(device.id); setSelectedDevice(device); }}
-                      className="w-full flex items-center justify-between px-3 py-2"
-                      aria-expanded={isExpanded}
-                      aria-controls={panelId}
-                    >
-                      <div className="flex items-center gap-2 text-left">
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <button
+                        type="button"
+                        onClick={() => { toggleExpand(device.id); setSelectedDevice(device); }}
+                        className="flex items-center gap-2 text-left flex-1 min-w-0"
+                        aria-expanded={isExpanded}
+                        aria-controls={panelId}
+                      >
                         {device.type === 'pump' && <Droplets className="h-4 w-4 text-[hsl(var(--aqua))]" />}
                         {device.type === 'valve' && <Gauge className="h-4 w-4 text-success" />}
                         {device.type === 'tank' && <Container className="h-4 w-4 text-warning" />}
-                        <span className="font-medium text-sm">{device.name}</span>
+                        <span className="font-medium text-sm truncate">{device.name}</span>
                         <span className="text-xs text-muted-foreground">#{device.id}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
+                      </button>
+                      <div className="flex items-center gap-2 ml-2">
                         {(device.type === 'pump' || device.type === 'valve') && (
                           <div className="flex items-center gap-1">
                             <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{device.isOn ? (device.type === 'pump' ? 'RUN' : 'OPEN') : (device.type === 'pump' ? 'STOP' : 'CLOSE')}</span>
@@ -410,9 +401,17 @@ export default function SCADA() {
                         >
                           {device.isOn ? 'ON' : 'OFF'}
                         </Badge>
-                        <span className={`transition-transform duration-200 text-xs ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
+                        <button
+                          type="button"
+                          onClick={() => { toggleExpand(device.id); setSelectedDevice(device); }}
+                          className="text-xs transition-transform"
+                          aria-expanded={isExpanded}
+                          aria-controls={panelId}
+                        >
+                          <span className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
+                        </button>
                       </div>
-                    </button>
+                    </div>
                     {/* Expanded Content */}
                     {isExpanded && (
                       <div id={panelId} role="region" aria-label={`${device.name} details`} className="px-3 pb-3 space-y-2 text-xs animate-slideUp">
