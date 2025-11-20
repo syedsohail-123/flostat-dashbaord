@@ -28,23 +28,26 @@ import {
 } from "@/components/ui/sidebar";
 import { NavLink as RouterLink, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { AppSidebarProps } from "./types/types";
 
 const navigationItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Device Management", url: "/devices", icon: Cpu },
-  { title: "User Management", url: "/users", icon: Users },
-  { title: "Schedule Manager", url: "/schedule", icon: Calendar },
-  { title: "Logs", url: "/logs", icon: FileText },
-  { title: "Reports", url: "/reports", icon: BarChart3 },
-  { title: "Text Extractor", url: "/ocr", icon: ScanText },
-  { title: "SCADA Control", url: "/scada", icon: Activity },
+  { title: "Dashboard", url: "dashboard", icon: LayoutDashboard },
+  { title: "Device Management", url: "devices", icon: Cpu },
+  { title: "User Management", url: "users", icon: Users },
+  { title: "Schedule Manager", url: "schedule", icon: Calendar },
+  { title: "Logs", url: "logs", icon: FileText },
+  { title: "Reports", url: "reports", icon: BarChart3 },
+  { title: "Text Extractor", url: "ocr", icon: ScanText },
+  { title: "SCADA Control", url: "scada", icon: Activity },
 ];
 
-export function AppSidebar() {
+
+
+export function AppSidebar({ components, setComponents }: AppSidebarProps) {
   const { open } = useSidebar();
   const { logout, user, currentOrganization } = useAuth();
   const navigate = useNavigate();
-
+  console.log("Selected : ",components)
   const handleSignOut = async () => {
     try {
       logout();
@@ -90,15 +93,15 @@ export function AppSidebar() {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      end={item.url === "/"}
+                    <div 
+                     onClick={()=> setComponents(item.url)}
+                     
                       className="flex items-center gap-3 px-3 py-2 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md"
-                      activeClassName="bg-sidebar-primary text-sidebar-primary-foreground font-medium"
+                      // activeClassName="bg-sidebar-primary text-sidebar-primary-foreground font-medium"
                     >
                       <item.icon className="h-5 w-5 shrink-0" />
                       {open && <span>{item.title}</span>}
-                    </NavLink>
+                    </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

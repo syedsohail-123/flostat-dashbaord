@@ -10,7 +10,7 @@ export const roles = {
 
 export type Role = typeof roles[keyof typeof roles];
 
-export const giveRoles = ["admin", "controller", "guest"] as const;
+export const giveRoles = ["admin", "controller", "guest" ,"pending"] as const;
 export type GiveRole = typeof giveRoles[number];
 
 // ---------- Role Status ----------

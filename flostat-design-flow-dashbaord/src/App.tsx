@@ -25,7 +25,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Organizations from "./pages/Organizations.tsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   startWebSocket,
   stopWebSocket,
@@ -33,12 +33,15 @@ import {
 } from "./utils/webSocketService.ts";
 import { Provider } from "react-redux";
 import { store } from "./store.ts";
+import FlostatDashboard from "./pages/FlostatDashboard.tsx";
 
 const queryClient = new QueryClient();
 
 function AppShell() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
+   const [components, setComponents] = useState<string>("dashboard");
+   console.log("Component in app: ",components)
   const shelllessRoutes = [
     "/",
     "/signin",
@@ -62,6 +65,7 @@ function AppShell() {
   if (!isAuthenticated && !shelllessRoutes.includes(location.pathname as any)) {
     return <Navigate to="/" replace />;
   }
+ 
 
   if (isShellless) {
     return (
@@ -81,7 +85,7 @@ function AppShell() {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <AppSidebar />
+        <AppSidebar components={components} setComponents={setComponents} />
         <div className="flex-1 flex flex-col">
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
             <SidebarTrigger />
@@ -89,15 +93,10 @@ function AppShell() {
           </header>
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/devices" element={<Devices />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/schedule" element={<Schedule />} />
-              <Route path="/logs" element={<Logs />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/ocr" element={<OCR />} />
-              <Route path="/scada" element={<SCADA />} />
-              <Route path="/settings" element={<Settings />} />
+              <Route path="org/:org_id">
+                  <Route index element={<FlostatDashboard  components={components}/>}/>
+              </Route>
+             
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

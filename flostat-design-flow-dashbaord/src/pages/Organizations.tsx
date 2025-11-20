@@ -14,13 +14,6 @@ import { setUserOrgs } from "@/slice/userSlice";
 import { setOrgId } from "@/slice/orgSlice";
 
 
-interface Org {
-  id: string;
-  name: string;
-  description?: string;
-  location?: string;
-}
-
 export default function Organizations() {
   const [open, setOpen] = useState(false);
 const dispatch = useDispatch();
@@ -90,7 +83,7 @@ const dispatch = useDispatch();
     // first select org_id save to redux then navigate
     console.log("Org id selected: ",orgId);
     dispatch(setOrgId(orgId));
-    navigate('/dashboard');
+    navigate(`/org/${orgId}`);
   };
 
   if (loading) {

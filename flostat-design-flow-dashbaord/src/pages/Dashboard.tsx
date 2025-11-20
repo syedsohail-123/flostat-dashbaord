@@ -220,22 +220,7 @@ export default function Dashboard() {
   const org_id = useSelector((state: RootState)=> state.org.org_id);
   const token = useSelector((state: RootState)=> state.auth.token);
   console.log("Token :",token)
-  // fetch topics of the org
-  useEffect(()=>{
-    const fetchTopicsOfOrg = async(org_id)=>{
-       const result = await getOrgTopics(org_id,token);
-       console.log("Result topic fetch : ",result);
-       if(result){
-        dispatch(setTopics(result));
-       }
-    }
-    if(org_id && token){
-      fetchTopicsOfOrg(org_id);
-    }else{
-      console.error("Missing: ",token,org_id)
-      toast.error("Missing params like org_id or token ");
-    }
-  },[org_id])
+
   // Load devices from localStorage when component mounts
   useEffect(() => {
     const loadDevicesFromStorage = () => {
