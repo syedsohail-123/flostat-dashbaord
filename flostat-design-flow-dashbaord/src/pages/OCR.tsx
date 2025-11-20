@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { uploadFileForOCR, parseOCRResponse } from "@/lib/operations/ocrApis";
 import {
   Upload,
   FileText,
@@ -29,6 +31,7 @@ type ExtractedItem = {
 
 export default function OCR() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -68,37 +71,64 @@ export default function OCR() {
     onFiles(e.dataTransfer.files);
   };
 
-  const startExtraction = () => {
+  const startExtraction = async () => {
     if (!file) return;
+
     setIsExtracting(true);
-    setProgress(5);
+    setProgress(10);
     setItems([]);
     setRawText("");
-    // Simulate progressive extraction
-    const steps = [15, 35, 55, 75, 90, 100];
-    let i = 0;
-    const id = setInterval(() => {
-      setProgress(steps[i]);
-      i++;
-      if (i >= steps.length) {
-        clearInterval(id);
-        // Mock extracted results
-        const mock: ExtractedItem[] = [
-          { id: "1", label: "Device ID", value: "PUMP-A1-2024", confidence: 98 },
-          { id: "2", label: "Serial Number", value: "SN-45782-XY", confidence: 95 },
-          { id: "3", label: "Pressure Reading", value: "3.2 Bar", confidence: 99 },
-          { id: "4", label: "Temperature", value: "68°C", confidence: 97 },
-          { id: "5", label: "Flow Rate", value: "450 L/min", confidence: 96 },
-          { id: "6", label: "Timestamp", value: "2024-01-15 14:23", confidence: 99 },
-        ];
-        setItems(mock);
-        setRawText(
-          "Device ID: PUMP-A1-2024\nSerial Number: SN-45782-XY\nPressure: 3.2 Bar\nTemperature: 68°C\nFlow Rate: 450 L/min\nTimestamp: 2024-01-15 14:23"
-        );
-        setIsExtracting(false);
-        toast({ title: "Extraction complete", description: `${file.name} processed successfully` });
+    setError(null);
+
+    try {
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 90) return prev;
+          return prev + 10;
+        });
+      }, 500);
+
+      // Get auth token from localStorage
+      const token = localStorage.getItem('token');
+
+      // Call the real OCR API
+      const response = await uploadFileForOCR(file, token);
+
+      console.log('OCR API Response:', response);
+
+      clearInterval(progressInterval);
+      setProgress(100);
+
+      if (response.success) {
+        // Parse the response
+        const { extractedItems, rawText: extractedText } = parseOCRResponse(response);
+
+        console.log('Extracted Items:', extractedItems);
+        console.log('Raw Text:', extractedText);
+
+        setItems(extractedItems);
+        setRawText(extractedText);
+
+        toast({
+          title: "Extraction complete",
+          description: `${file.name} processed successfully`
+        });
+      } else {
+        console.error('OCR API returned success=false:', response);
+        throw new Error(response.message || response.error || "OCR extraction failed");
       }
-    }, 600);
+    } catch (error: any) {
+      console.error("OCR Error:", error);
+      setError(error.message || "Failed to extract text from file");
+      toast({
+        title: "Extraction failed",
+        description: error.message || "An error occurred during text extraction",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExtracting(false);
+    }
   };
 
   const stopExtraction = () => {

@@ -225,12 +225,16 @@ export default function Users() {
                           setUserModel(true);
   };
 
-  const filteredUsers = orgUsers &&  orgUsers.filter(user => 
-    user.orgName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // const filteredUsers = orgUsers &&  orgUsers.filter(user => 
+  //   user.orgName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //   user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = (orgUsers ?? []).filter(user => 
+  (user.orgName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+   user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+ );
   console.log("Filter user : ",filteredUsers)
- const label = filteredUsers.filter((u) => u.status === "pending").length
+//  const label = filteredUsers.filter((u) => u.status === "pending").length
+    const label = (orgUsers ?? []).filter((u) => u.status === "pending").length;
  console.log("Label p: ",label)
   if (loading) {
     return (
