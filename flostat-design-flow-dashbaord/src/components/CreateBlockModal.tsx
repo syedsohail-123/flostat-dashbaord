@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface CreateBlockModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateBlock: (block: { name: string; location: string; description: string }) => void;
+  onCreateBlock: (block: { block_name: string; location: string; description: string }) => void;
 }
 
 export function CreateBlockModal({ open, onOpenChange, onCreateBlock }: CreateBlockModalProps) {
@@ -26,7 +26,7 @@ export function CreateBlockModal({ open, onOpenChange, onCreateBlock }: CreateBl
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && location.trim()) {
-      onCreateBlock({ name, location, description });
+      onCreateBlock({ block_name:name, location, description });
       setName("");
       setLocation("");
       setDescription("");

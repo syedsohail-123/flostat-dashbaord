@@ -230,7 +230,7 @@ export default function Users() {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
   console.log("Filter user : ",filteredUsers)
- const label = filteredUsers.filter((u) => u.status === "pending").length
+ const label = filteredUsers &&  filteredUsers.filter((u) => u.status === "pending").length
  console.log("Label p: ",label)
   if (loading) {
     return (

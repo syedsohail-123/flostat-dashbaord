@@ -1,16 +1,7 @@
 // slice/deviceSlice.ts
+import { Device } from "@/components/types/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export interface Device {
-  device_id: string;
-  device_name?: string;
-  device_type?: string;
-  status?: any;
-  current_level?: number;
-  min_threshold?: number;
-  max_threshold?: number;
-  [key: string]: any;
-}
 
 interface DeviceState {
   devices: Device[];

@@ -16,3 +16,21 @@ export interface User {
   role?: "admin" | "controller" | "guest"; // Make role optional
  status: string;
 }
+export interface Block{
+    org_id: string;
+    block_name: string;
+    block_id?:  string;
+    location?: string;
+    description?: string;
+}
+export interface Device {
+  device_id: string;
+  device_name?: string;
+  device_type?: string;
+  org_id?: string;
+  status?: any;
+  current_level?: number;
+  min_threshold?: number;
+  max_threshold?: number;
+  [key: string]: any;
+}
