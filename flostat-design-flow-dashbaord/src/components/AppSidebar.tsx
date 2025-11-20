@@ -5,6 +5,7 @@ import {
   Calendar, 
   FileText, 
   BarChart3,
+  Headphones,
   ScanText,
   Activity,
   Settings as SettingsIcon,
@@ -39,6 +40,7 @@ const navigationItems = [
   { title: "Reports", url: "reports", icon: BarChart3 },
   { title: "Text Extractor", url: "ocr", icon: ScanText },
   { title: "SCADA Control", url: "scada", icon: Activity },
+  { title: "Customer Support", url: "customer-support", icon: Headphones },
 ];
 
 

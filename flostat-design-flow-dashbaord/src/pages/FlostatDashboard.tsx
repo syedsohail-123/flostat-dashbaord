@@ -13,6 +13,7 @@ import { getOrgTopics } from "@/lib/operations/orgApis";
 import { RootState } from "@/store";
 import { setTopics } from "@/slice/webSocketSlice";
 import { toast } from "sonner";
+import CustomerService from "./CustomerSupport";
 
 
 const FlostatDashboard = ({ components }) => {
@@ -46,6 +47,7 @@ const FlostatDashboard = ({ components }) => {
       {components === "reports" && <Reports />},
       {components === "ocr" && <OCR />},
       {components === "scada" && <SCADA />},
+      {components === "customer-support" && <CustomerService />},
     </div>
   );
 };
