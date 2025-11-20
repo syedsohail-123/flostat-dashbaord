@@ -165,6 +165,37 @@ export default function OCR() {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, value } : it)));
   };
 
+  const exportCSV = () => {
+    if (!items.length) return;
+
+    // Create CSV content
+    const headers = ['Label', 'Value', 'Confidence'];
+    const rows = items.map(item => [
+      item.label,
+      item.value,
+      `${item.confidence}%`
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ocr-extraction-${Date.now()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({ title: "Exported", description: "CSV file downloaded successfully" });
+  };
+
   return (
     <div className="space-y-6 animate-fadeIn">
       <div>
@@ -352,7 +383,7 @@ export default function OCR() {
               <Button variant="aqua" disabled={!items.length && !rawText} className="flex-1 min-w-[160px]">
                 Save to Database
               </Button>
-              <Button variant="outline" disabled={!items.length && !rawText} className="flex-1 min-w-[160px]">
+              <Button variant="outline" disabled={!items.length && !rawText} className="flex-1 min-w-[160px]" onClick={exportCSV}>
                 Export CSV
               </Button>
             </div>
