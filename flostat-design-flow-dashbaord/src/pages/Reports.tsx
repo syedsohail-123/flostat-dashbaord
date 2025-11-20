@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
-import { Download, Calendar } from "lucide-react";
+import { Download } from "lucide-react";
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,18 +42,12 @@ interface TankDevice {
 }
 
 export default function Reports() {
-  const { authToken, currentOrganization, organizations, setCurrentOrganization } = useAuth();
+  const { authToken, currentOrganization, organizations } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
   const [tankDevices, setTankDevices] = useState<TankDevice[]>([]);
   const [selectedTank, setSelectedTank] = useState<string>("no-tanks");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-
-  console.log("Reports: Component rendered with context values:", { 
-    authToken: !!authToken, 
-    currentOrganization,
-    organizations
-  });
 
   // Fetch tank devices when organization changes
   useEffect(() => {
@@ -62,29 +56,23 @@ export default function Reports() {
     }
   }, [authToken, currentOrganization]);
 
-  // Removed automatic fetching - data will only be fetched when user clicks "Fetch Data" button
-
   const fetchTankDevices = async () => {
     try {
       if (!authToken || !currentOrganization) return;
-      
-      // Make sure the API service has the current auth token
+
       apiService.setAuthToken(authToken);
-      
+
       const response = await apiService.getDevices(currentOrganization.org_id);
-      
+
       if (response.success && response.devices) {
-        // Filter only tank devices
-        const tanks = response.devices.filter((device: any) => 
+        const tanks = response.devices.filter((device: any) =>
           device.device_type === 'tank'
         );
         setTankDevices(tanks);
-        
-        // Set the first tank as selected if none is selected or if current selection is invalid
+
         if (tanks.length > 0 && (!selectedTank || selectedTank === "no-tanks")) {
           setSelectedTank(tanks[0].device_id);
         } else if (tanks.length === 0) {
-          // Reset selection if no tanks available
           setSelectedTank("no-tanks");
         }
       }
@@ -97,234 +85,167 @@ export default function Reports() {
   const fetchReports = async () => {
     setLoading(true);
     try {
-      
-      console.log("Reports: Fetching reports with context:", { 
-        authToken, 
-        currentOrganization,
-        selectedDate,
-        selectedTank
-      });
-      
-      // Log more details about the auth state
-      console.log("Reports: Auth token exists:", !!authToken);
-      console.log("Reports: Current organization exists:", !!currentOrganization);
-      console.log("Reports: Selected tank exists:", !!selectedTank);
-      
-      if (authToken && currentOrganization && selectedTank && selectedTank !== "no-tanks") {
-        console.log("Reports: All required data present, proceeding with real fetch");
-        
-        // Make sure the API service has the current auth token
-        apiService.setAuthToken(authToken);
-        
-        const params = {
-          org_id: currentOrganization.org_id, // Use actual organization ID
-          date: selectedDate || new Date().toISOString().split('T')[0], // Today's date if not selected
-          tank_id: selectedTank
-        };
-        
-        // Ensure date is in the correct format (YYYY-MM-DD)
-        if (params.date && !/\d{4}-\d{2}-\d{2}/.test(params.date)) {
-          const dateObj = new Date(params.date);
-          params.date = dateObj.toISOString().split('T')[0];
-        }
-        
-        console.log("Reports: Fetching with params:", params);
-        
-        const response = await apiService.getTankRelatedReport(params);
-        
-        console.log("Reports: API response:", response);
-        
-        // Check if response has the expected structure
-        if (!response) {
-          throw new Error("Invalid response from server");
-        }
-        
-        // Handle case where there are no connected logs
-        const connectedLogs = response.connectedLogs || [];
-        console.log('Connected logs received:', connectedLogs);
-        
-        // Transform the response data to match our Report interface
-        const transformedReports: Report[] = connectedLogs.map((log: any) => ({
-          id: log.device_id || log.id || log.uuid || "Unknown", // Use available ID
-          deviceType: log.device_type || "Unknown",
-          status: log.status !== undefined ? log.status : null,
-          level: log.current_level ? `${log.current_level}%` : (log.level !== undefined ? log.level : null),
-          lastUpdated: log.last_updated ? new Date(log.last_updated).toLocaleString() : "Unknown",
-          updatedBy: log.updated_by || log.email || "System"
-        }));
-        
-        setReports(transformedReports);
-        console.log("Reports: Successfully set real data");
-      } else {
-        // Show mock data if not authenticated or no organization
-        console.log("Reports: Missing required data, showing demo data");
-        console.log("Reports: Auth token missing:", !authToken);
-        console.log("Reports: Organization missing:", !currentOrganization);
-        console.log("Reports: Tank missing:", !selectedTank);
-        
-        if (!authToken) {
-          toast.info("Please log in to see real-time reports from DynamoDB.");
-        } else if (!currentOrganization) {
-          if (organizations && organizations.length === 0) {
-            toast.info("You are not part of any organization. Please contact your administrator to be added to an organization.");
-          } else {
-            toast.info("Please select an organization to see real-time reports.");
-          }
-        } else if (!selectedTank) {
-          if (tankDevices.length === 0) {
-            toast.info("No tank devices found in this organization.");
-          } else {
-            toast.info("Please select a tank to see reports.");
-          }
-        }
-        
-        const mockReports: Report[] = [
-          { id: "092ab42a-7190-4c79-a08a-9ce182a75fa1", deviceType: "Pump", status: "ON", level: null, lastUpdated: "11/10/2025, 10:20:30 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "092ab42a-7190-4c79-a08a-9ce182a75fa1", deviceType: "Pump", status: "OFF", level: null, lastUpdated: "11/10/2025, 10:19:29 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "092ab42a-7190-4c79-a08a-9ce182a75fa1", deviceType: "Pump", status: "ON", level: null, lastUpdated: "11/10/2025, 8:37:24 PM", updatedBy: "ahmedsyedsonal176@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:20:15 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:20:15 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "75%", lastUpdated: "11/8/2025, 3:20:10 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "75%", lastUpdated: "11/8/2025, 3:20:10 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "78%", lastUpdated: "11/8/2025, 3:20:03 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "78%", lastUpdated: "11/8/2025, 3:20:03 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "1e0514a2-38b1-4e50-adc4-6eb05b445bf9", deviceType: "Pump", status: "OFF", level: null, lastUpdated: "11/8/2025, 3:19:06 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "80%", lastUpdated: "11/8/2025, 3:19:06 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "80%", lastUpdated: "11/8/2025, 3:19:06 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:19:00 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:19:00 PM", updatedBy: "hrnh6531@gmail.com" },
-          { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "60%", lastUpdated: "11/8/2025, 3:18:53 PM", updatedBy: "hrnh6531@gmail.com" },
-        ];
-        setReports(mockReports);
+      // Validation checks with specific error messages
+      if (!authToken) {
+        toast.error("Authentication required", {
+          description: "Please log in to view reports.",
+        });
+        setReports([]);
+        return;
       }
+
+      if (!currentOrganization) {
+        toast.error("Organization required", {
+          description: "Please select an organization to view reports.",
+        });
+        setReports([]);
+        return;
+      }
+
+      if (!selectedTank || selectedTank === "no-tanks") {
+        toast.error("Tank selection required", {
+          description: "Please select a tank to view reports.",
+        });
+        setReports([]);
+        return;
+      }
+
+      apiService.setAuthToken(authToken);
+
+      const params = {
+        org_id: currentOrganization.org_id,
+        date: selectedDate || new Date().toISOString().split('T')[0],
+        tank_id: selectedTank
+      };
+
+      // Ensure date is in the correct format (YYYY-MM-DD)
+      if (params.date && !/\d{4}-\d{2}-\d{2}/.test(params.date)) {
+        const dateObj = new Date(params.date);
+        params.date = dateObj.toISOString().split('T')[0];
+      }
+
+      console.log("Fetch Reports Params:", JSON.stringify(params, null, 2));
+      const response = await apiService.getTankRelatedReport(params);
+      console.log("Fetch Reports Response:", JSON.stringify(response, null, 2));
+
+      if (!response) {
+        throw new Error("Invalid response from server");
+      }
+
+      // Aggregate all logs
+      const connectedLogs = [
+        ...(response.connectedLogs || []),
+        ...(response.tank_logs || []),
+        ...(response.pump_logs || []),
+        ...(response.sump_logs || []),
+        ...(response.valve_logs || []),
+        ...(response.data || []),
+        ...(response.logs || []),
+        ...(response.Items || [])
+      ];
+
+      // Remove duplicates based on ID if necessary (optional but good practice)
+      const uniqueLogs = Array.from(new Map(connectedLogs.map((item: any) => [item.device_id || item.id || item.uuid, item])).values());
+
+      console.log("Extracted unique logs:", JSON.stringify(uniqueLogs, null, 2));
+
+      const transformedReports: Report[] = uniqueLogs.map((log: any) => ({
+        id: log.device_id || log.id || log.uuid || "Unknown",
+        deviceType: log.device_type || "Unknown",
+        status: log.status !== undefined ? log.status : null,
+        level: log.current_level ? `${log.current_level}%` : (log.level !== undefined ? log.level : null),
+        lastUpdated: log.last_updated ? new Date(log.last_updated).toLocaleString() : "Unknown",
+        updatedBy: log.updated_by || log.email || "System"
+      }));
+
+      setReports(transformedReports);
+
+      if (uniqueLogs.length === 0) {
+        toast.info("No data found", {
+          description: `No reports found for the selected tank on ${params.date}`,
+        });
+      } else {
+        toast.success("Data fetched successfully", {
+          description: `Retrieved ${uniqueLogs.length} records`,
+        });
+      }
+
     } catch (error) {
       console.error("Fetch reports error:", error);
       const errorMessage = (error as Error).message;
-      
-      // Handle authentication errors specifically
+
       if (errorMessage.includes("Authentication required")) {
-        toast.error("Authentication required", {
-          description: "Please log in to view real-time reports. Currently showing demo data.",
+        toast.error("Authentication failed", {
+          description: "Your session may have expired. Please log in again.",
         });
       } else if (errorMessage.includes("User does not exit in this org")) {
-        toast.error("Organization access error", {
-          description: "You don't have access to this organization. Please contact your administrator.",
+        toast.error("Access denied", {
+          description: "You don't have access to this organization.",
         });
       } else if (errorMessage.includes("Tank device not Found")) {
-        toast.error("Tank device not found", {
-          description: "The selected tank device does not exist in this organization.",
+        toast.error("Tank not found", {
+          description: "The selected tank device does not exist.",
         });
       } else {
         toast.error("Failed to fetch reports", {
           description: errorMessage,
         });
       }
-      
-      // Fallback to mock data in case of error
-      console.log("Reports: Error occurred, showing demo data as fallback");
-      const mockReports: Report[] = [
-        { id: "092ab42a-7190-4c79-a08a-9ce182a75fa1", deviceType: "Pump", status: "ON", level: null, lastUpdated: "11/10/2025, 10:20:30 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "092ab42a-7190-4c79-a08a-9ce182a75fa1", deviceType: "Pump", status: "OFF", level: null, lastUpdated: "11/10/2025, 10:19:29 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "092ab42a-7190-4c79-a08a-9ce182a75fa1", deviceType: "Pump", status: "ON", level: null, lastUpdated: "11/10/2025, 8:37:24 PM", updatedBy: "ahmedsyedsonal176@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:20:15 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:20:15 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "75%", lastUpdated: "11/8/2025, 3:20:10 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "75%", lastUpdated: "11/8/2025, 3:20:10 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "78%", lastUpdated: "11/8/2025, 3:20:03 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "78%", lastUpdated: "11/8/2025, 3:20:03 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "1e0514a2-38b1-4e50-adc4-6eb05b445bf9", deviceType: "Pump", status: "OFF", level: null, lastUpdated: "11/8/2025, 3:19:06 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "80%", lastUpdated: "11/8/2025, 3:19:06 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "80%", lastUpdated: "11/8/2025, 3:19:06 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:19:00 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:19:00 PM", updatedBy: "hrnh6531@gmail.com" },
-        { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "60%", lastUpdated: "11/8/2025, 3:18:53 PM", updatedBy: "hrnh6531@gmail.com" },
-      ];
-      setReports(mockReports);
+      setReports([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleFetchData = async () => {
-    toast.info(`Fetching data for ${selectedTank} on ${selectedDate || 'today'}`);
     await fetchReports();
   };
 
   const handleDownloadPDF = async () => {
-    // In a real implementation, this would download a PDF report
     toast.info("Download PDF functionality would be implemented here");
   };
 
-  // Process real data for chart
   const levelSeries = useMemo(() => {
-    // Group data by time and device type
     const chartData: Record<string, any> = {};
-    
+
     reports.forEach(report => {
-      console.log('Processing report for chart:', report);
-      // Extract time portion from lastUpdated
-      // Format: "11/8/2025, 3:20:15 PM" -> "3:20:15 PM" -> "15:20:15"
       const timeMatch = report.lastUpdated?.match(/\d{1,2}:\d{2}:\d{2}\s*(AM|PM)/i);
       if (timeMatch && (report.level || report.status !== null)) {
-        console.log('Matched time:', timeMatch[0], 'for report:', report);
         let timeStr = timeMatch[0];
-        // Convert to 24-hour format
         let [time, modifier] = timeStr.split(' ');
         let [hours, minutes, seconds] = time.split(':');
-        
+
         if (modifier?.toUpperCase() === 'PM' && hours !== '12') {
           hours = (parseInt(hours, 10) + 12).toString();
         }
         if (modifier?.toUpperCase() === 'AM' && hours === '12') {
           hours = '00';
         }
-        
-        // Pad with zeros to ensure consistent format
+
         hours = hours.padStart(2, '0');
         minutes = minutes.padStart(2, '0');
         seconds = seconds.padStart(2, '0');
-        
+
         const formattedTime = `${hours}:${minutes}:${seconds}`;
-        
+
         if (!chartData[formattedTime]) {
           chartData[formattedTime] = { ts: formattedTime };
         }
-        
-        // Add data based on device type
+
         if (report.level) {
-          // For tanks/sumps with level data
           const levelValue = parseInt(report.level);
           if (!isNaN(levelValue)) {
             chartData[formattedTime][report.deviceType.toLowerCase()] = levelValue;
           }
         } else if (report.status !== null) {
-          // For pumps/valves with status data (ON=1, OFF=0)
           chartData[formattedTime][report.deviceType.toLowerCase()] = report.status === 'ON' ? 1 : 0;
         }
       }
     });
-    
-    // Convert to array and sort by time
+
     const dataArray = Object.values(chartData);
     dataArray.sort((a, b) => a.ts.localeCompare(b.ts));
-    
-    console.log('Chart data array:', dataArray);
-    
-    // If we have no real data, show demo data
-    if (dataArray.length === 0) {
-      return [
-        { ts: "08:00:00", tank: 62, pump: 0, sump: 55 },
-        { ts: "09:00:00", tank: 64, pump: 1, sump: 57 },
-        { ts: "10:00:00", tank: 65, pump: 0, sump: 59 },
-        { ts: "11:00:00", tank: 67, pump: 1, sump: 60 },
-        { ts: "12:00:00", tank: 69, pump: 0, sump: 63 },
-        { ts: "13:00:00", tank: 70, pump: 1, sump: 65 },
-        { ts: "14:00:00", tank: 72, pump: 0, sump: 66 },
-        { ts: "15:00:00", tank: 73, pump: 1, sump: 67 },
-        { ts: "16:00:00", tank: 74, pump: 0, sump: 68 },
-      ];
-    }
-    
+
     return dataArray;
   }, [reports]);
 
@@ -335,22 +256,12 @@ export default function Reports() {
     valve: { label: "Valve Status", color: "hsl(270 70% 60%)" },
   };
 
-  const filteredReports = reports; // simple pass-through to match screenshot layout
-
-  if (loading) {
-    return (
-      <div className="min-h-[70vh] w-full flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[hsl(var(--aqua))] border-t-transparent"></div>
-      </div>
-    );
-  }
+  const filteredReports = reports;
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Title */}
       <h1 className="text-3xl font-bold tracking-tight text-soft text-center">Reports</h1>
-      
-      {/* Organization Selector */}
+
       {authToken && organizations && organizations.length > 1 && (
         <div className="p-4 rounded-md border bg-muted/30">
           <div className="font-medium mb-2">Select Organization</div>
@@ -365,7 +276,6 @@ export default function Reports() {
         </div>
       )}
 
-      {/* Controls Row */}
       <div className="flex items-end justify-between gap-3">
         <div className="flex items-end gap-3">
           <div className="flex flex-col gap-1">
@@ -373,7 +283,7 @@ export default function Reports() {
             <Select value={selectedTank} onValueChange={setSelectedTank} disabled={tankDevices.length === 0}>
               <SelectTrigger className="w-[160px] h-9">
                 <SelectValue placeholder="Select Tank">
-                  {selectedTank 
+                  {selectedTank
                     ? tankDevices.find(t => t.device_id === selectedTank)?.device_name || selectedTank
                     : "Select Tank"}
                 </SelectValue>
@@ -404,17 +314,16 @@ export default function Reports() {
               />
             </div>
           </div>
-          <Button 
-            className="h-9 px-3 bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white shadow-soft-sm" 
+          <Button
+            className="h-9 px-3 bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white shadow-soft-sm"
             onClick={handleFetchData}
-            disabled={!authToken || !currentOrganization || !selectedTank || selectedTank === "no-tanks"}
           >
             Fetch Data
           </Button>
-          <Button 
-            className="h-9 px-3 bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-hover))] text-white shadow-soft-sm" 
+          <Button
+            className="h-9 px-3 bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-hover))] text-white shadow-soft-sm"
             onClick={fetchReports}
-            disabled={loading || !authToken || !currentOrganization || !selectedTank || selectedTank === "no-tanks"}
+            disabled={loading}
           >
             {loading ? (
               <div className="flex items-center gap-2">
@@ -431,7 +340,6 @@ export default function Reports() {
         </Button>
       </div>
 
-      {/* Reports Table */}
       <div className="rounded-lg border border-border/50 bg-card shadow-soft-lg animate-slideUp">
         <Table>
           <TableHeader>
@@ -444,34 +352,41 @@ export default function Reports() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredReports.map((report, index) => (
-              <TableRow key={index} className="hover:bg-muted/20 transition-smooth">
-                <TableCell className="font-mono text-xs text-soft">{report.id}</TableCell>
-                <TableCell className="space-x-1">
-                  {report.status && (
-                    <Badge
-                      variant="outline"
-                      className={report.status === "ON" ? "bg-success/15 text-success/90 border-success/25 shadow-soft-sm" : "bg-destructive/15 text-destructive/90 border-destructive/25 shadow-soft-sm"}
-                    >
-                      {report.status}
-                    </Badge>
-                  )}
-                  {report.level && (
-                    <Badge variant="outline" className="bg-[hsl(var(--aqua))]/15 text-[hsl(var(--aqua))] border-[hsl(var(--aqua))]/25 shadow-soft-sm">
-                      {report.level}
-                    </Badge>
-                  )}
+            {filteredReports.length > 0 ? (
+              filteredReports.map((report, index) => (
+                <TableRow key={index} className="hover:bg-muted/20 transition-smooth">
+                  <TableCell className="font-mono text-xs text-soft">{report.id}</TableCell>
+                  <TableCell className="space-x-1">
+                    {report.status && (
+                      <Badge
+                        variant="outline"
+                        className={report.status === "ON" ? "bg-success/15 text-success/90 border-success/25 shadow-soft-sm" : "bg-destructive/15 text-destructive/90 border-destructive/25 shadow-soft-sm"}
+                      >
+                        {report.status}
+                      </Badge>
+                    )}
+                    {report.level && (
+                      <Badge variant="outline" className="bg-[hsl(var(--aqua))]/15 text-[hsl(var(--aqua))] border-[hsl(var(--aqua))]/25 shadow-soft-sm">
+                        {report.level}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-soft">{report.deviceType}</TableCell>
+                  <TableCell className="text-sm text-soft-muted">{report.lastUpdated}</TableCell>
+                  <TableCell className="text-sm text-[hsl(var(--aqua))]">{report.updatedBy}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  No reports found. Select a tank and date, then click Fetch Data.
                 </TableCell>
-                <TableCell className="text-sm text-soft">{report.deviceType}</TableCell>
-                <TableCell className="text-sm text-soft-muted">{report.lastUpdated}</TableCell>
-                <TableCell className="text-sm text-[hsl(var(--aqua))]">{report.updatedBy}</TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
 
-      {/* Visualization */}
       <h2 className="text-center text-sm font-semibold text-soft">Device Data Visualization</h2>
       <Card className="rounded-lg border border-border/50 bg-card shadow-soft-lg">
         <CardHeader className="border-b bg-muted/30 py-3">
@@ -483,36 +398,36 @@ export default function Reports() {
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis dataKey="ts" tickLine={false} axisLine={false} />
               <YAxis width={28} tickLine={false} axisLine={false} />
-              <Area 
-                dataKey="tank" 
-                stroke="var(--color-tank)" 
-                fill="var(--color-tank)" 
-                type="monotone" 
-                strokeWidth={2} 
+              <Area
+                dataKey="tank"
+                stroke="var(--color-tank)"
+                fill="var(--color-tank)"
+                type="monotone"
+                strokeWidth={2}
                 fillOpacity={0.3}
               />
-              <Area 
-                dataKey="pump" 
-                stroke="var(--color-pump)" 
-                fill="var(--color-pump)" 
-                type="monotone" 
-                strokeWidth={2} 
+              <Area
+                dataKey="pump"
+                stroke="var(--color-pump)"
+                fill="var(--color-pump)"
+                type="monotone"
+                strokeWidth={2}
                 fillOpacity={0.3}
               />
-              <Area 
-                dataKey="sump" 
-                stroke="var(--color-sump)" 
-                fill="var(--color-sump)" 
-                type="monotone" 
-                strokeWidth={2} 
+              <Area
+                dataKey="sump"
+                stroke="var(--color-sump)"
+                fill="var(--color-sump)"
+                type="monotone"
+                strokeWidth={2}
                 fillOpacity={0.3}
               />
-              <Area 
-                dataKey="valve" 
-                stroke="var(--color-valve)" 
-                fill="var(--color-valve)" 
-                type="monotone" 
-                strokeWidth={2} 
+              <Area
+                dataKey="valve"
+                stroke="var(--color-valve)"
+                fill="var(--color-valve)"
+                type="monotone"
+                strokeWidth={2}
                 fillOpacity={0.3}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
