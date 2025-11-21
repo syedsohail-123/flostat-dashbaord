@@ -341,13 +341,13 @@ export default function Support() {
     };
 
     const filteredQueries = queries.filter(query => {
-        const statusMatch = statusFilter === "ALL" || query.status === statusFilter;
+        const statusMatch = statusFilter === "ALL" || query.status?.toUpperCase() === statusFilter?.toUpperCase();
         const typeMatch = typeFilter === "ALL" || query.queryType === typeFilter;
         return statusMatch && typeMatch;
     });
 
     const getStatusColor = (status: string) => {
-        switch (status) {
+        switch (status?.toUpperCase()) {
             case "ACTIVE":
                 return "bg-[hsl(var(--aqua))]/15 text-[hsl(var(--aqua))] border-[hsl(var(--aqua))]/25";
             case "RESOLVED":
@@ -708,8 +708,8 @@ export default function Support() {
                                                 <div key={idx} className="flex gap-3">
                                                     <div className="flex flex-col items-center">
                                                         <div className={`w-2 h-2 rounded-full ${event.type === 'created' ? 'bg-[hsl(var(--aqua))]' :
-                                                                event.type === 'status_change' ? 'bg-success' :
-                                                                    'bg-muted-foreground'
+                                                            event.type === 'status_change' ? 'bg-success' :
+                                                                'bg-muted-foreground'
                                                             }`}></div>
                                                         {idx < getTimelineEvents(selectedQuery).length - 1 && (
                                                             <div className="w-0.5 h-full bg-border mt-1"></div>
