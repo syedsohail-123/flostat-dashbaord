@@ -2,6 +2,7 @@
 import toast from "react-hot-toast";
 import { apiClient } from "../httpClient";
 import { deviceEndpoints } from "../endPoints";
+import { Device } from "@/components/types/types";
 
 const {
   DEVICE_CREATE,
@@ -15,15 +16,7 @@ const {
 } = deviceEndpoints;
 
 // ------------------ TYPES ------------------
-export interface Device {
-  id: string;
-  org_id: string;
-  name: string;
-  status?: string;
-  type?: string;
-  device_type?: string;
-  [key: string]: any;
-}
+
 
 export interface DevicePayload {
   org_id: string;
@@ -126,7 +119,7 @@ export const deviceUpdate = async (data: DevicePayload, token: string): Promise<
 
     toast.success(res.data.message || "Device updated successfully");
     return res.data.devices ?? [];
-/blink  } catch (error: any) {
+ } catch (error: any) {
     console.error("Error in deviceUpdate:", error);
     toast.error(error?.response?.data?.message || error?.message || "Failed to update device");
     return null;

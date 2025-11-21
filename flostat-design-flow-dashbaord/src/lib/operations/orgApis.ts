@@ -3,6 +3,7 @@
 import toast from "react-hot-toast";
 import { orgEndpoints } from "../endPoints";
 import { apiClient } from "../httpClient";
+import { Log, ThresholdPayload } from "@/components/types/types";
 
 
 // ------------------ TYPES ------------------
@@ -27,18 +28,9 @@ export interface User {
 //   name: string;
 // }
 
-export interface Log {
-  id: string;
-  topicId: string;
-  message: string;
-  timestamp: string;
-}
 
-export interface ThresholdPayload {
-  org_id: string;
-  device_id: string;
-  threshold: number;
-}
+
+
 
 // ------------------ API FUNCTIONS ------------------
 

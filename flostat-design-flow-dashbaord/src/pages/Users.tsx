@@ -233,8 +233,12 @@ export default function Users() {
    user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
  );
   console.log("Filter user : ",filteredUsers)
+<<<<<<< HEAD
 //  const label = filteredUsers.filter((u) => u.status === "pending").length
     const label = (orgUsers ?? []).filter((u) => u.status === "pending").length;
+=======
+ const label = filteredUsers &&  filteredUsers.filter((u) => u.status === "pending").length
+>>>>>>> added-mqtt-connection-with-redux-store
  console.log("Label p: ",label)
   if (loading) {
     return (

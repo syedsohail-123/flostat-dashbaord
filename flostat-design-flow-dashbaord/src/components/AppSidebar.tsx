@@ -5,7 +5,11 @@ import {
   Calendar,
   FileText,
   BarChart3,
+<<<<<<< HEAD
   MessageSquare,
+=======
+  Headphones,
+>>>>>>> added-mqtt-connection-with-redux-store
   ScanText,
   Activity,
   Settings as SettingsIcon,
@@ -41,6 +45,7 @@ const navigationItems = [
   { title: "Support", url: "support", icon: MessageSquare },
   { title: "Text Extractor", url: "ocr", icon: ScanText },
   { title: "SCADA Control", url: "scada", icon: Activity },
+  { title: "Customer Support", url: "customer-support", icon: Headphones },
 ];
 
 
@@ -141,14 +146,19 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
             )}
           </div>
           {/* Settings (at bottom) */}
+<<<<<<< HEAD
           <NavLink
             to="/settings"
+=======
+          <div 
+           
+>>>>>>> added-mqtt-connection-with-redux-store
             className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground/80"
-            activeClassName="bg-sidebar-primary text-sidebar-primary-foreground font-medium"
+           onClick={()=>setComponents("setting")}
           >
             <SettingsIcon className="h-5 w-5" />
             {open && <span>Settings</span>}
-          </NavLink>
+          </div>
           {/* Sign out */}
           <button
             onClick={handleSignOut}

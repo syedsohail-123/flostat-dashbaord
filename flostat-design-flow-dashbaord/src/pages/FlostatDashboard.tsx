@@ -14,6 +14,8 @@ import { getOrgTopics } from "@/lib/operations/orgApis";
 import { RootState } from "@/store";
 import { setTopics } from "@/slice/webSocketSlice";
 import { toast } from "sonner";
+import CustomerService from "./CustomerSupport";
+import Settings from "./Settings";
 
 
 const FlostatDashboard = ({ components }) => {
@@ -48,6 +50,9 @@ const FlostatDashboard = ({ components }) => {
       {components === "support" && <Support />},
       {components === "ocr" && <OCR />},
       {components === "scada" && <SCADA />},
+      {components === "customer-support" && <CustomerService />},
+      {components === "setting" && <Settings />},
+
     </div>
   );
 };

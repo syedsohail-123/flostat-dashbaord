@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface CreateBlockModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateBlock: (block: { name: string; location: string; description: string }) => void;
+  onCreateBlock: (block: { block_name: string; location: string; description: string }) => void;
 }
 
 export function CreateBlockModal({ open, onOpenChange, onCreateBlock }: CreateBlockModalProps) {
@@ -26,39 +26,11 @@ export function CreateBlockModal({ open, onOpenChange, onCreateBlock }: CreateBl
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && location.trim()) {
-      onCreateBlock({ name, location, description });
-      
-      // Save block to localStorage so it appears in block selectors
-      saveBlockToStorage(name, location);
-      
+      onCreateBlock({ block_name:name, location, description });
       setName("");
-  const saveBlockToStorage = (blockName: string, blockLocation: string) => {
-    // Get existing blocks from localStorage
-    const storedBlocks = localStorage.getItem('blocks');
-    let blocks: Block[] = storedBlocks ? JSON.parse(storedBlocks) : [];
-    
-    // Check if block already exists
-    const blockExists = blocks.some((block: Block) => block.name === blockName);
-    // Get existing blocks from localStorage
-    const storedBlocks = localStorage.getItem('blocks');
-    let blocks = storedBlocks ? JSON.parse(storedBlocks) : [];
-    
-    // Check if block already exists
-    const blockExists = blocks.some((block: any) => block.name === blockName);
-    
-    // If block doesn't exist, add it
-    if (!blockExists) {
-      const newBlock = {
-        id: `block-${Date.now()}`, // Generate unique ID
-        name: blockName,
-        location: blockLocation
-      };
-      
-      blocks = [...blocks, newBlock];
-      localStorage.setItem('blocks', JSON.stringify(blocks));
-      
-      // Dispatch a custom event to notify other components of the update
-      window.dispatchEvent(new CustomEvent('blocksUpdated'));
+      setLocation("");
+      setDescription("");
+      onOpenChange(false);
     }
   };
 
