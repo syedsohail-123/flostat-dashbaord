@@ -5,20 +5,13 @@ import {
   Calendar,
   FileText,
   BarChart3,
-<<<<<<< HEAD
-  MessageSquare,
-=======
-  Headphones,
->>>>>>> added-mqtt-connection-with-redux-store
   ScanText,
   Activity,
   Settings as SettingsIcon,
-  LogOut
+  LogOut,
+  Headset
 } from "lucide-react";
-import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
-import { OrganizationSelector } from "@/components/OrganizationSelector";
-
 import {
   Sidebar,
   SidebarContent,
@@ -31,30 +24,19 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { NavLink as RouterLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { AppSidebarProps } from "./types/types";
 
-const navigationItems = [
-  { title: "Dashboard", url: "dashboard", icon: LayoutDashboard },
-  { title: "Device Management", url: "devices", icon: Cpu },
-  { title: "User Management", url: "users", icon: Users },
-  { title: "Schedule Manager", url: "schedule", icon: Calendar },
-  { title: "Logs", url: "logs", icon: FileText },
-  { title: "Reports", url: "reports", icon: BarChart3 },
-  { title: "Support", url: "support", icon: MessageSquare },
-  { title: "Text Extractor", url: "ocr", icon: ScanText },
-  { title: "SCADA Control", url: "scada", icon: Activity },
-  { title: "Customer Support", url: "customer-support", icon: Headphones },
-];
-
-
+interface AppSidebarProps {
+  components: string;
+  setComponents: (component: string) => void;
+}
 
 export function AppSidebar({ components, setComponents }: AppSidebarProps) {
   const { open } = useSidebar();
-  const { logout, user, currentOrganization } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
-  console.log("Selected : ", components)
+
   const handleSignOut = async () => {
     try {
       logout();
@@ -65,6 +47,18 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
       console.error("Sign out error:", error);
     }
   };
+
+  const navigationItems = [
+    { title: "Dashboard", id: "dashboard", icon: LayoutDashboard },
+    { title: "Device Management", id: "devices", icon: Cpu },
+    { title: "User Management", id: "users", icon: Users },
+    { title: "Schedule Manager", id: "schedule", icon: Calendar },
+    { title: "Logs", id: "logs", icon: FileText },
+    { title: "Reports", id: "reports", icon: BarChart3 },
+    { title: "Text Extractor", id: "ocr", icon: ScanText },
+    { title: "SCADA Control", id: "scada", icon: Activity },
+    { title: "Customer Support", id: "support", icon: Headset },
+  ];
 
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar">
@@ -80,14 +74,6 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
             </div>
           )}
         </div>
-        {open && currentOrganization && (
-          <div className="mt-4">
-            <div className="text-xs text-sidebar-foreground/70 mb-1">Current Organization</div>
-            <div className="text-sm font-medium text-sidebar-foreground truncate">
-              {currentOrganization.name}
-            </div>
-          </div>
-        )}
       </SidebarHeader>
 
       <SidebarContent>
@@ -99,67 +85,40 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <div
-                      onClick={() => setComponents(item.url)}
-
-                      className="flex items-center gap-3 px-3 py-2 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md"
-                    // activeClassName="bg-sidebar-primary text-sidebar-primary-foreground font-medium"
-                    >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      {open && <span>{item.title}</span>}
-                    </div>
+                  <SidebarMenuButton
+                    onClick={() => setComponents(item.id)}
+                    isActive={components === item.id}
+                    className="w-full justify-start"
+                  >
+                    <item.icon className="h-5 w-5 shrink-0" />
+                    {open && <span>{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {/* Settings link moved to bottom section */}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Organization selector */}
-        {open && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/70 text-xs font-semibold uppercase tracking-wider px-3">
-              Organization
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <div className="px-3 py-2">
-                <OrganizationSelector />
-              </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {/* Profile / Sign out section at bottom */}
         <div className="mt-auto p-3 border-t border-sidebar-border space-y-2">
-          {/* Profile (non-link) */}
           <div className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/80">
-            <div className="h-8 w-8 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center font-semibold">
-              {user?.name ? user.name.charAt(0) : 'U'}
-            </div>
-            {open && user && (
+            <div className="h-8 w-8 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center font-semibold">FG</div>
+            {open && (
               <div className="flex-1">
-                <div className="text-sm font-medium truncate">{user.name}</div>
-                <div className="text-xs text-sidebar-foreground/70 truncate">{user.email}</div>
+                <div className="text-sm font-medium">Souvik Ghosh</div>
+                <div className="text-xs text-sidebar-foreground/70">Admin</div>
               </div>
             )}
           </div>
-          {/* Settings (at bottom) */}
-<<<<<<< HEAD
-          <NavLink
-            to="/settings"
-=======
-          <div 
-           
->>>>>>> added-mqtt-connection-with-redux-store
-            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground/80"
-           onClick={()=>setComponents("setting")}
+
+          <SidebarMenuButton
+            onClick={() => setComponents("setting")}
+            isActive={components === "setting"}
+            className="w-full justify-start"
           >
             <SettingsIcon className="h-5 w-5" />
             {open && <span>Settings</span>}
-          </div>
-          {/* Sign out */}
+          </SidebarMenuButton>
+
           <button
             onClick={handleSignOut}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-left text-sidebar-foreground/80"

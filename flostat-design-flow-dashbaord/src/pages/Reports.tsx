@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,13 +22,25 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Download } from "lucide-react";
-<<<<<<< HEAD
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { OrganizationSelector } from "@/components/OrganizationSelector";
-=======
->>>>>>> added-mqtt-connection-with-redux-store
+
+interface Report {
+  id: string;
+  deviceType: string;
+  status: string | null;
+  level: string | null;
+  lastUpdated: string;
+  updatedBy: string;
+}
+
+interface TankDevice {
+  device_id: string;
+  device_name: string;
+  device_type: string;
+}
 
 const reports = [
   { id: "092ab42a-7190-4c79-a08a-9ce182a75fa1", deviceType: "Pump", status: "ON", level: null, lastUpdated: "11/10/2025, 10:20:30 PM", updatedBy: "hrnh6531@gmail.com" },
@@ -49,7 +61,6 @@ const reports = [
 ];
 
 export default function Reports() {
-<<<<<<< HEAD
   const { authToken, currentOrganization, organizations } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
@@ -256,26 +267,6 @@ export default function Reports() {
 
     return dataArray;
   }, [reports]);
-=======
-  const [selectedTank, setSelectedTank] = useState("tank-1");
-  const [selectedDate, setSelectedDate] = useState("");
-
-  // Demo time series (aggregated tank levels) for chart
-  const levelSeries = useMemo(
-    () => [
-      { ts: "08:00", tank1: 62, tank2: 55, tank3: 78 },
-      { ts: "09:00", tank1: 64, tank2: 57, tank3: 79 },
-      { ts: "10:00", tank1: 65, tank2: 59, tank3: 77 },
-      { ts: "11:00", tank1: 67, tank2: 60, tank3: 80 },
-      { ts: "12:00", tank1: 69, tank2: 63, tank3: 81 },
-      { ts: "13:00", tank1: 70, tank2: 65, tank3: 82 },
-      { ts: "14:00", tank1: 72, tank2: 66, tank3: 83 },
-      { ts: "15:00", tank1: 73, tank2: 67, tank3: 84 },
-      { ts: "16:00", tank1: 74, tank2: 68, tank3: 85 },
-    ],
-    []
-  );
->>>>>>> added-mqtt-connection-with-redux-store
 
   const chartConfig = {
     tank1: { label: "Tank 1", color: "hsl(192 100% 42%)" },
@@ -283,16 +274,11 @@ export default function Reports() {
     tank3: { label: "Tank 3", color: "hsl(142 65% 40%)" },
   };
 
-<<<<<<< HEAD
   const filteredReports = reports;
-=======
-  const filteredReports = reports; // simple pass-through to match screenshot layout
->>>>>>> added-mqtt-connection-with-redux-store
 
   return (
     <div className="space-y-6 animate-fadeIn">
       <h1 className="text-3xl font-bold tracking-tight text-soft text-center">Reports</h1>
-<<<<<<< HEAD
 
       {authToken && organizations && organizations.length > 1 && (
         <div className="p-4 rounded-md border bg-muted/30">
@@ -307,8 +293,6 @@ export default function Reports() {
           )}
         </div>
       )}
-=======
->>>>>>> added-mqtt-connection-with-redux-store
 
       <div className="flex items-end justify-between gap-3">
         <div className="flex items-end gap-3">
@@ -316,15 +300,11 @@ export default function Reports() {
             <label className="text-xs text-soft-muted">Select Tank</label>
             <Select value={selectedTank} onValueChange={setSelectedTank}>
               <SelectTrigger className="w-[160px] h-9">
-<<<<<<< HEAD
                 <SelectValue placeholder="Select Tank">
                   {selectedTank
                     ? tankDevices.find(t => t.device_id === selectedTank)?.device_name || selectedTank
                     : "Select Tank"}
                 </SelectValue>
-=======
-                <SelectValue placeholder="Select Tank" />
->>>>>>> added-mqtt-connection-with-redux-store
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="tank-1">Tank 1</SelectItem>
@@ -342,7 +322,6 @@ export default function Reports() {
               className="h-9 w-[140px]"
             />
           </div>
-<<<<<<< HEAD
           <Button
             className="h-9 px-3 bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white shadow-soft-sm"
             onClick={handleFetchData}
@@ -363,9 +342,6 @@ export default function Reports() {
               "Refresh Data"
             )}
           </Button>
-=======
-          <Button className="h-9 px-3 bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white shadow-soft-sm">Fetch Data</Button>
->>>>>>> added-mqtt-connection-with-redux-store
         </div>
         <Button className="h-9 gap-2 bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-hover))] text-white"><Download className="h-4 w-4" /> Download PDF</Button>
       </div>
@@ -417,23 +393,7 @@ export default function Reports() {
         </Table>
       </div>
 
-<<<<<<< HEAD
-=======
-      {/* Debug Information */}
-      <div className="p-4 rounded-md border bg-warning/10 border-warning/30 text-xs text-soft">
-        <div className="font-medium text-center text-warning">Debug Information</div>
-        <div className="mt-2 grid gap-1 sm:grid-cols-2 md:grid-cols-3">
-          <div>Current City: Los Estacas</div>
-          <div>Device Count: 1657</div>
-          <div>Logs: Available</div>
-          <div>Water Level Alerts: 23</div>
-          <div>Flow Rate Data Points: 447</div>
-          <div>Last Sync: 2m ago</div>
-        </div>
-      </div>
 
-      {/* Visualization */}
->>>>>>> added-mqtt-connection-with-redux-store
       <h2 className="text-center text-sm font-semibold text-soft">Device Data Visualization</h2>
       <Card className="rounded-lg border border-border/50 bg-card shadow-soft-lg">
         <CardHeader className="border-b bg-muted/30 py-3">
@@ -450,7 +410,6 @@ export default function Reports() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis dataKey="ts" tickLine={false} axisLine={false} />
-<<<<<<< HEAD
               <YAxis width={28} tickLine={false} axisLine={false} />
               <Area
                 dataKey="tank"
@@ -484,10 +443,6 @@ export default function Reports() {
                 strokeWidth={2}
                 fillOpacity={0.3}
               />
-=======
-              <YAxis width={28} tickLine={false} axisLine={false} domain={[50, 90]} />
-              <Area dataKey="tank2" stroke="var(--color-tank2)" fill="url(#tank2Fill)" type="monotone" strokeWidth={2} />
->>>>>>> added-mqtt-connection-with-redux-store
               <ChartTooltip content={<ChartTooltipContent />} />
               <ChartLegend content={<ChartLegendContent />} />
             </AreaChart>
