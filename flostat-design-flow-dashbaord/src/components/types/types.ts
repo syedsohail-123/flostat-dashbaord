@@ -34,3 +34,15 @@ export interface Device {
   max_threshold?: number;
   [key: string]: any;
 }
+
+export interface Log {
+  uuid: string;
+  device_type: string;
+  status: string;
+  last_updated?: string;
+  updated_at?: string;
+  org_id: string;
+  device_id: string;
+updated_by: string;
+  [key: string]: any;
+}

@@ -13,6 +13,12 @@ import {
 import { Download, Search, Calendar, Filter } from "lucide-react";
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { logsOrgTopics } from "@/lib/operations/orgApis";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { setLogs } from "@/slice/orgSlice";
+import LogsExportDropdown from "@/components/logs/LogsExportDropdown";
 
 const logLevelColors = {
   info: "bg-aqua/10 text-aqua border-aqua/20",
@@ -31,10 +37,12 @@ interface Log {
 }
 
 export default function Logs() {
-  const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-
+  const dispatch = useDispatch();
+  const token = useSelector((state: RootState)=> state.auth.token);
+  const devicesObject = useSelector((state: RootState)=> state.device.devicesObject);
+  const {org_id,logs} = useSelector((state: RootState)=> state.org);
   useEffect(() => {
     fetchLogs();
   }, []);
@@ -42,20 +50,15 @@ export default function Logs() {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      // In a real implementation, this would fetch from the backend
-      // const response = await apiService.getLogs();
-      // For now, we'll use mock data
-      const mockLogs: Log[] = [
-        { id: "LOG-2847", timestamp: "2024-01-15 14:23:45", level: "info", device: "Pump A1", event: "Device started successfully", user: "John Martinez" },
-        { id: "LOG-2846", timestamp: "2024-01-15 14:20:12", level: "success", device: "Valve V-03", event: "Calibration completed", user: "Sarah Chen" },
-        { id: "LOG-2845", timestamp: "2024-01-15 14:15:33", level: "warning", device: "Tank T1", event: "Low level warning triggered", user: "System" },
-        { id: "LOG-2844", timestamp: "2024-01-15 14:10:55", level: "error", device: "Pump B2", event: "Connection timeout - device offline", user: "System" },
-        { id: "LOG-2843", timestamp: "2024-01-15 14:05:21", level: "info", device: "Sensor FS-01", event: "Data sync completed", user: "System" },
-        { id: "LOG-2842", timestamp: "2024-01-15 14:00:07", level: "info", device: "Valve V-05", event: "Position adjusted to 75%", user: "Michael Roberts" },
-        { id: "LOG-2841", timestamp: "2024-01-15 13:55:42", level: "warning", device: "Tank T2", event: "Pressure threshold exceeded", user: "System" },
-        { id: "LOG-2840", timestamp: "2024-01-15 13:50:18", level: "success", device: "Pump C1", event: "Maintenance check passed", user: "Emily Davis" },
-      ];
-      setLogs(mockLogs);
+      const data = {
+        org_id
+      }
+      const result = await logsOrgTopics(data,token)
+
+      console.log("Result log: ",logs,result);
+      if(result){
+         dispatch(setLogs(result));
+      }
     } catch (error) {
       toast.error("Failed to fetch logs");
       console.error("Fetch logs error:", error);
@@ -66,13 +69,14 @@ export default function Logs() {
 
   const handleExportLogs = async () => {
     // In a real implementation, this would call the backend API to export logs
+
     toast.info("Export logs functionality would be implemented here");
   };
 
   const filteredLogs = logs.filter(log => 
-    log.event.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.device.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.user.toLowerCase().includes(searchTerm.toLowerCase())
+    log.device_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.updated_by.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.device_id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -92,7 +96,7 @@ export default function Logs() {
         </div>
         <Button variant="aqua" className="gap-2" onClick={handleExportLogs}>
           <Download className="h-4 w-4" />
-          Export Logs
+          <LogsExportDropdown data={logs}/>
         </Button>
       </div>
 
@@ -120,10 +124,10 @@ export default function Logs() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
+              <TableHead className="font-semibold">Device</TableHead>
               <TableHead className="font-semibold">Log ID</TableHead>
               <TableHead className="font-semibold">Timestamp</TableHead>
               <TableHead className="font-semibold">Level</TableHead>
-              <TableHead className="font-semibold">Device</TableHead>
               <TableHead className="font-semibold">Event</TableHead>
               <TableHead className="font-semibold">User</TableHead>
             </TableRow>
@@ -131,22 +135,23 @@ export default function Logs() {
           <TableBody>
             {filteredLogs.map((log) => (
               <TableRow key={log.id} className="hover:bg-muted/30">
-                <TableCell className="font-mono text-sm">{log.id}</TableCell>
-                <TableCell className="text-sm text-muted-foreground font-mono">
-                  {log.timestamp}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={logLevelColors[log.level]}>
-                    {log.level.toUpperCase()}
-                  </Badge>
-                </TableCell>
                 <TableCell>
                   <span className="rounded-md bg-secondary/20 px-2 py-1 text-xs font-medium">
-                    {log.device}
+                    {devicesObject[log.device_id] || log.device_id}
                   </span>
                 </TableCell>
-                <TableCell className="font-medium">{log.event}</TableCell>
-                <TableCell className="text-muted-foreground">{log.user}</TableCell>
+                <TableCell className="font-mono text-sm">{log.uuid}</TableCell>
+                <TableCell className="text-sm text-muted-foreground font-mono">
+                  {log.last_updated}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={logLevelColors[log.status]}>
+                    {log.status?.toUpperCase()}
+                  </Badge>
+                </TableCell>
+                
+                <TableCell className="font-medium">{log.event || "Event"}</TableCell>
+                <TableCell className="text-muted-foreground">{log.updated_by}</TableCell>
               </TableRow>
             ))}
           </TableBody>
