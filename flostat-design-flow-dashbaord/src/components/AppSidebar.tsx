@@ -1,10 +1,11 @@
-import { 
-  LayoutDashboard, 
-  Cpu, 
-  Users, 
-  Calendar, 
-  FileText, 
+import {
+  LayoutDashboard,
+  Cpu,
+  Users,
+  Calendar,
+  FileText,
   BarChart3,
+  MessageSquare,
   ScanText,
   Activity,
   Settings as SettingsIcon,
@@ -37,6 +38,7 @@ const navigationItems = [
   { title: "Schedule Manager", url: "schedule", icon: Calendar },
   { title: "Logs", url: "logs", icon: FileText },
   { title: "Reports", url: "reports", icon: BarChart3 },
+  { title: "Support", url: "support", icon: MessageSquare },
   { title: "Text Extractor", url: "ocr", icon: ScanText },
   { title: "SCADA Control", url: "scada", icon: Activity },
 ];
@@ -47,7 +49,7 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
   const { open } = useSidebar();
   const { logout, user, currentOrganization } = useAuth();
   const navigate = useNavigate();
-  console.log("Selected : ",components)
+  console.log("Selected : ", components)
   const handleSignOut = async () => {
     try {
       logout();
@@ -93,11 +95,11 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <div 
-                     onClick={()=> setComponents(item.url)}
-                     
+                    <div
+                      onClick={() => setComponents(item.url)}
+
                       className="flex items-center gap-3 px-3 py-2 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors rounded-md"
-                      // activeClassName="bg-sidebar-primary text-sidebar-primary-foreground font-medium"
+                    // activeClassName="bg-sidebar-primary text-sidebar-primary-foreground font-medium"
                     >
                       <item.icon className="h-5 w-5 shrink-0" />
                       {open && <span>{item.title}</span>}
@@ -109,7 +111,7 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        
+
         {/* Organization selector */}
         {open && (
           <SidebarGroup>
@@ -123,7 +125,7 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
-        
+
         {/* Profile / Sign out section at bottom */}
         <div className="mt-auto p-3 border-t border-sidebar-border space-y-2">
           {/* Profile (non-link) */}
@@ -139,8 +141,8 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
             )}
           </div>
           {/* Settings (at bottom) */}
-          <NavLink 
-            to="/settings" 
+          <NavLink
+            to="/settings"
             className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground/80"
             activeClassName="bg-sidebar-primary text-sidebar-primary-foreground font-medium"
           >
@@ -148,8 +150,8 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
             {open && <span>Settings</span>}
           </NavLink>
           {/* Sign out */}
-          <button 
-            onClick={handleSignOut} 
+          <button
+            onClick={handleSignOut}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-left text-sidebar-foreground/80"
           >
             <LogOut className="h-5 w-5" />

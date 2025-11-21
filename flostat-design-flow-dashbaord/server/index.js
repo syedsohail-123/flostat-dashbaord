@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json())// parser to use json
 const PORT = process.env.PORT || 4000
 // Configure CORS to allow credentials
-app.use(cors({ 
+app.use(cors({
   origin: ["http://localhost:5132",
     'https://awstraining.flostat.com',
     "http://localhost:56216"
@@ -21,22 +21,22 @@ app.use(cors({
   credentials: true
 }));
 app.get("/", (req, res) => {
-    
-    res.send("Hello world")
+
+  res.send("Hello world")
 
 })
 
-app.use('/api/demo',(req,res)=>{
-    res.json({
-        s:"d",
-        the:"f"
-    })
+app.use('/api/demo', (req, res) => {
+  res.json({
+    s: "d",
+    the: "f"
+  })
 })
-app.use('/api/v1/auth',authRoutes)
-app.use('/api/v1/org',orgRoutes)
-app.use('/api/v1/user',userRoutes)
-app.use('/api/v1/device',deviceRoutes)
-app.use('/api/v1/report',reportRoutes)
+app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/org', orgRoutes)
+app.use('/api/v1/user', userRoutes)
+app.use('/api/v1/device', deviceRoutes)
+app.use('/api/v1/report', reportRoutes)
 
 // default path
 // app.use('/',(req,res)=>{
@@ -45,6 +45,6 @@ app.use('/api/v1/report',reportRoutes)
 
 
 app.listen(PORT, () => {
-    console.log("Connected to server");
+  console.log("Connected to server");
 })
 export const handler = serverless(app);
