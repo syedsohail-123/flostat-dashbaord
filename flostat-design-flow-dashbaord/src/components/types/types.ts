@@ -46,3 +46,10 @@ export interface Log {
 updated_by: string;
   [key: string]: any;
 }
+export interface ThresholdPayload {
+  org_id?: string;
+  device_id?: string;
+  block_id?: string;
+  min_threshold?: number;
+  max_threshold?: number;
+}

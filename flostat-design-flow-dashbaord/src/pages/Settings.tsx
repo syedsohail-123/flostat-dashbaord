@@ -4,6 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { updateOrgThreshold } from '@/lib/operations/orgApis';
+import { useDispatch } from 'react-redux';
 
 export default function Settings() {
   const [sumpThreshold, setSumpThreshold] = useState<number>(50);
@@ -11,7 +15,9 @@ export default function Settings() {
   const [savedSump, setSavedSump] = useState(false);
   const [savedTank, setSavedTank] = useState(false);
   const [loading, setLoading] = useState(true);
-
+ const { org_id} = useSelector((state: RootState)=> state.org);
+ const token = useSelector((state: RootState)=> state.auth.token);
+ const dispatch = useDispatch();
   useEffect(() => {
     fetchSettings();
   }, []);
@@ -19,9 +25,7 @@ export default function Settings() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      // In a real implementation, this would fetch from the backend
-      // const response = await apiService.getSettings();
-      // For now, we'll use mock data
+      
       setSumpThreshold(50);
       setTankRange([20, 80]);
     } catch (error) {
@@ -34,8 +38,8 @@ export default function Settings() {
 
   const saveSump = async () => {
     try {
-      // In a real implementation, this would call the backend API to save the sump threshold
-      // await apiService.saveSumpThreshold(sumpThreshold);
+
+      
       console.log('Saving sump threshold', sumpThreshold);
       setSavedSump(true);
       toast.success("Sump threshold saved successfully");
@@ -48,12 +52,22 @@ export default function Settings() {
 
   const saveTank = async () => {
     try {
+      console.log("save tank :",tankRange)
+      const data = {
+      org_id,
+     min_threshold:tankRange[0],
+     max_threshold: tankRange[1]
+      }
+      const result = await updateOrgThreshold(data,token);
+      if(result){
+        console.log('Saving tank threshold', tankRange);
+      setSavedTank(true);
+      // toast.success("Tank threshold saved successfully");
+      }
       // In a real implementation, this would call the backend API to save the tank range
       // await apiService.saveTankRange(tankRange);
-      console.log('Saving tank threshold', tankRange);
-      setSavedTank(true);
-      toast.success("Tank threshold saved successfully");
-      setTimeout(() => setSavedTank(false), 3000);
+      
+
     } catch (error) {
       toast.error("Failed to save tank threshold");
       console.error("Save tank threshold error:", error);
