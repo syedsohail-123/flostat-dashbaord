@@ -187,14 +187,14 @@ export const getBlocksOfOrgId = async (org_id: string, token: string): Promise<B
 };
 
 // Get Block Mode
-export const getBlockMode = async (block_id: string, token: string): Promise<string | null> => {
+export const getBlockMode = async (data: any, token: string): Promise<any | null> => {
   const toastId = toast.loading("Fetching block mode...");
   try {
     const res = await apiClientWithAuth(
       {
         method: "POST",
         url: GET_BLOCK_MODE,
-        bodyData: { block_id },
+        bodyData: data,
       },
       token
     );
@@ -204,7 +204,7 @@ export const getBlockMode = async (block_id: string, token: string): Promise<str
       return null;
     }
 
-    return res.data.block?.mode || res.data.mode || null;
+    return res.data.block|| res.data.mode || null;
   } catch (error: any) {
     console.error("Error fetching block mode:", error);
     toast.error(error?.response?.data?.message || error?.message || "Failed to fetch block mode");
