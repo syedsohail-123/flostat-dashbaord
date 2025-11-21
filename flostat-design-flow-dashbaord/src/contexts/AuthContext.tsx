@@ -79,14 +79,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check if user is already logged in (e.g., from localStorage)
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken') ||  localStorage.getItem('flostatToken') ;
     const userData = localStorage.getItem('user');
     console.log("AuthContext: Initializing with stored data:", { token: !!token, userData: !!userData });
 
-    if (token && userData) {
+    if (token ) {
       console.log("Token in auth provider: ", token)
       setAuthToken(token);
-      setUser(JSON.parse(userData));
+      // setUser(JSON.parse(userData));
       store.dispatch(setToken(token));
       setIsAuthenticated(true);
       // Set the token in the API service

@@ -2,6 +2,10 @@
 import toast from "react-hot-toast";
 import { apiClient } from "../httpClient";
 import { authEndpoints } from "../endPoints";
+import { setSignUpData, setToken } from "@/slice/authSlice";
+import { RootState } from "@/store";
+import { AnyAction, ThunkAction } from "@reduxjs/toolkit";
+import { GoogleOuthResponse, SignUpPayload } from "@/components/types/types";
 
 
 // ------------------ TYPES ------------------
@@ -19,11 +23,7 @@ export interface LoginPayload {
   password: string;
 }
 
-export interface SignUpPayload {
-  name: string;
-  email: string;
-  password: string;
-}
+
 
 export interface LoginResponse {
   token: string;
@@ -116,7 +116,6 @@ export const signUp = async (payload: SignUpPayload): Promise<LoginResponse | nu
   const toastId = toast.loading("Creating account...");
   try {
     const res = await apiPost(authEndpoints.SIGN_UP_API, payload);
-
     if (!res.data.success) {
       toast.error(res.data.message || "Failed to sign up");
       return null;
@@ -153,4 +152,50 @@ export const googleOAuthLogin = async (token: string): Promise<LoginResponse | n
   } finally {
     toast.dismiss(toastId);
   }
+};
+
+type NavigateFunction = (path: string) => void;
+export const googleOuth = (
+  email: string,
+  user: any, // You can refine the user type if needed
+  navigate: NavigateFunction
+): ThunkAction<Promise<void>, RootState, unknown, AnyAction> => {
+  return async (dispatch) => {
+    const toastId = toast.loading("Loading...");
+
+
+    try {
+      const res = await apiPost(authEndpoints.GOOGLE_OUTH_API,{email});
+      console.log("REspon:outh ",res);
+
+      if (!res.data?.success) {
+        toast.error("Error during Google authentication");
+        return;
+      }
+
+      dispatch(setSignUpData({ email }));
+
+      if (res.data.state === "login") {
+        console.log("Login state: ",res.data)
+        if (res.data.token) {
+
+          dispatch(setToken(res.data.token));
+          localStorage.setItem("flostatToken", JSON.stringify(res.data.token));
+          console.log("Now navigate to org")
+          navigate("/organizations");
+        } else {
+          toast.error("Token missing in response");
+        }
+      } else {
+        navigate("/complete-profile");
+      }
+    } catch (error: any) {
+      console.error("Error in googleOuth:", error);
+      const errorMessage = error.response?.data?.message || error.message || "Failed to authenticate with Google";
+      toast.error(errorMessage);
+    } finally {
+      
+      toast.dismiss(toastId);
+    }
+  };
 };

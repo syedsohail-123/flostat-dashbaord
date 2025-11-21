@@ -10,24 +10,33 @@ import flostatLogo from "./images/flostat-logo.webp";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "@/firebase";
 import { useDispatch } from "react-redux";
-import { googleOuth } from "@/lib/operations/authApis";
-import { AppDispatch } from "@/store";
+import { AppDispatch, RootState } from "@/store";
+import { useSelector } from "react-redux";
 
-export default function SignUp() {
+export default function CompleteProfile(){
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [conformPassword, setConformPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const navigate = useNavigate();
+    const { signup } = useAuth();
   const dispatch = useDispatch<AppDispatch>();
-  const { signup } = useAuth();
+    const {signUpData} = useSelector((state: RootState)=> state.auth);
 
+  useEffect(()=>{
+    if(!signUpData || !signUpData?.email){
+      navigate("/");
+    }else{
+      setEmail(signUpData?.email)
+    }
+
+  },[signUpData])
   // Parallax effect
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -55,11 +64,11 @@ export default function SignUp() {
       lastName.trim() !== "" &&
       email.trim() !== "" &&
       password.trim() !== "" &&
-      confirmPassword.trim() !== "" &&
-      password === confirmPassword &&
+      conformPassword.trim() !== "" &&
+      password === conformPassword &&
       Object.values(rules).every(rule => rule)
     );
-  }, [firstName, lastName, email, password, confirmPassword, rules]);
+  }, [firstName, lastName, email, conformPassword, password, rules]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,11 +85,13 @@ export default function SignUp() {
         password,
         firstName: middleName ? `${firstName} ${middleName}` : firstName,
         lastName,
-        conformPassword: confirmPassword
+        conformPassword: conformPassword
       });
+      console.log("Succ: ",success);
       if (success) {
+        
         toast.success("Account created successfully!");
-        navigate('/organizations');
+        navigate('/signin');
       } else {
         toast.error("Failed to create account. Please try again.");
       }
@@ -91,21 +102,7 @@ export default function SignUp() {
       setIsLoading(false);
     }
   };
-   const handleGoogleAuth =async () => {
-    try {
-    const result = await signInWithPopup(auth,googleProvider);
-    const user = result.user;
-      // dispatch(googleOuth(user.email,user,navigate));
-      if(result){
-        dispatch(googleOuth(user.email, user, navigate));
 
-      }
-    } catch (error) {
-      console.error("Error f ",error)
-      throw error;
-    }
-    toast.success("Google Auth clicked (implement logic)");
-  };
   // Password strength calculation
   const passwordStrength = useMemo(() => {
     const validRules = Object.values(rules).filter(Boolean).length;
@@ -335,8 +332,8 @@ export default function SignUp() {
                       type={showConfirmPw ? "text" : "password"}
                       placeholder="Confirm Password"
                       className="pr-9 focus:ring-2 focus:ring-[hsl(var(--aqua))]/20 transition-all"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      value={conformPassword}
+                      onChange={(e) => setConformPassword(e.target.value)}
                       required
                     />
                     <button
@@ -348,7 +345,7 @@ export default function SignUp() {
                       {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {password && confirmPassword && password !== confirmPassword && (
+                  {password && conformPassword && password !== conformPassword && (
                     <p className="text-xs text-destructive mt-1">Passwords do not match</p>
                   )}
                 </div>
@@ -368,30 +365,12 @@ export default function SignUp() {
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-              </div>
+             
             </div>
 
-            <div className="w-full animate-fadeIn" style={{ animationDelay: '0.6s' }}>
-              <Button variant="outline" className="w-full gap-2 hover:bg-[hsl(var(--aqua))]/10 hover:text-[hsl(var(--aqua))] hover:border-[hsl(var(--aqua))]/50 transition-all">
-                 <button
-        onClick={handleGoogleAuth}
-        className="w-full bg-white border border-gray-300 text-black font-semibold py-2 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2"
-      >
-        <img
-          src="https://www.svgrepo.com/show/475656/google-color.svg"
-          alt="Google"
-          className="w-5 h-5"
-        />
-        Continue with Google
-      </button>
-              </Button>
-            </div>
+         
 
-            <p className="text-center text-sm text-muted-foreground animate-fadeIn" style={{ animationDelay: '0.65s' }}>
-              Already have an account? <a className="text-[hsl(var(--aqua))] hover:underline font-medium" href="/signin">Sign in</a>
-            </p>
+          
 
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground animate-fadeIn" style={{ animationDelay: '0.7s' }}>
               <ShieldCheck className="h-3 w-3" />

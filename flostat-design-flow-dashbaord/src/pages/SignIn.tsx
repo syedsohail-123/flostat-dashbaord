@@ -8,6 +8,11 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import flostatLogo from "./images/flostat-logo.webp";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "@/firebase";
+import { AppDispatch } from "@/store";
+import { useDispatch } from "react-redux";
+import { googleOuth } from "@/lib/operations/authApis";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,6 +22,7 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const { login } = useAuth();
 
   // Parallax effect
@@ -31,6 +37,20 @@ export default function SignIn() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
+  const handleGoogleAuth = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      // dispatch(googleOuth(user.email,user,navigate));
+      if (result) {
+        dispatch(googleOuth(user.email, user, navigate));
+      }
+    } catch (error) {
+      console.error("Error f ", error);
+      throw error;
+    }
+    toast.success("Google Auth clicked (implement logic)");
+  };
   const handleLogin = async () => {
     if (!email || !password) {
       toast.error("Please fill in all fields");
@@ -42,7 +62,7 @@ export default function SignIn() {
       const success = await login(email, password);
       if (success) {
         toast.success("Login successful!");
-        navigate('/dashboard');
+        navigate("/organizations");
       } else {
         toast.error("Login failed. Please check your credentials.");
       }
@@ -64,11 +84,14 @@ export default function SignIn() {
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-background via-background to-secondary/20">
       {/* Animated Grid Pattern */}
       <div className="absolute inset-0 opacity-[0.02]">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `linear-gradient(hsl(var(--aqua)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--aqua)) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px',
-          animation: 'gridMove 20s linear infinite'
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `linear-gradient(hsl(var(--aqua)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--aqua)) 1px, transparent 1px)`,
+            backgroundSize: "50px 50px",
+            animation: "gridMove 20s linear infinite",
+          }}
+        />
       </div>
 
       {/* Animated Background Logos with Parallax */}
@@ -76,7 +99,7 @@ export default function SignIn() {
         className="absolute inset-0 pointer-events-none overflow-hidden"
         style={{
           transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`,
-          transition: 'transform 0.3s ease-out'
+          transition: "transform 0.3s ease-out",
         }}
       >
         {/* Center Logo */}
@@ -87,33 +110,48 @@ export default function SignIn() {
               alt="Flostat Logo"
               className="w-full h-full object-contain animate-float"
             />
-            <div className="absolute inset-0 bg-[hsl(var(--aqua))]/40 animate-float" style={{ mixBlendMode: 'multiply' }} />
+            <div
+              className="absolute inset-0 bg-[hsl(var(--aqua))]/40 animate-float"
+              style={{ mixBlendMode: "multiply" }}
+            />
           </div>
         </div>
 
         {/* Left Side Logo */}
         <div className="absolute -left-20 top-1/4 w-[500px] h-[500px] opacity-20">
-          <div className="relative w-full h-full" style={{ animationDelay: '1s' }}>
+          <div
+            className="relative w-full h-full"
+            style={{ animationDelay: "1s" }}
+          >
             <img
               src={flostatLogo}
               alt="Flostat Logo"
               className="w-full h-full object-contain animate-float"
-              style={{ animationDelay: '1s' }}
+              style={{ animationDelay: "1s" }}
             />
-            <div className="absolute inset-0 bg-[hsl(var(--aqua))]/40 animate-float" style={{ mixBlendMode: 'multiply', animationDelay: '1s' }} />
+            <div
+              className="absolute inset-0 bg-[hsl(var(--aqua))]/40 animate-float"
+              style={{ mixBlendMode: "multiply", animationDelay: "1s" }}
+            />
           </div>
         </div>
 
         {/* Right Side Logo */}
         <div className="absolute -right-20 bottom-1/4 w-[500px] h-[500px] opacity-20">
-          <div className="relative w-full h-full" style={{ animationDelay: '2s' }}>
+          <div
+            className="relative w-full h-full"
+            style={{ animationDelay: "2s" }}
+          >
             <img
               src={flostatLogo}
               alt="Flostat Logo"
               className="w-full h-full object-contain animate-float"
-              style={{ animationDelay: '2s' }}
+              style={{ animationDelay: "2s" }}
             />
-            <div className="absolute inset-0 bg-[hsl(var(--aqua))]/40 animate-float" style={{ mixBlendMode: 'multiply', animationDelay: '2s' }} />
+            <div
+              className="absolute inset-0 bg-[hsl(var(--aqua))]/40 animate-float"
+              style={{ mixBlendMode: "multiply", animationDelay: "2s" }}
+            />
           </div>
         </div>
       </div>
@@ -123,22 +161,35 @@ export default function SignIn() {
 
       {/* Enhanced Floating Particles with Ripple */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-[hsl(var(--aqua))]/20 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
-        <div className="absolute top-1/3 right-1/3 w-3 h-3 bg-[hsl(var(--aqua))]/10 rounded-full animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-[hsl(var(--aqua))]/15 rounded-full animate-ping" style={{ animationDuration: '5s' }} />
-        <div className="absolute top-1/2 left-1/3 w-4 h-4 bg-[hsl(var(--aqua))]/8 rounded-full animate-pulse" style={{ animationDuration: '6s' }} />
+        <div
+          className="absolute top-1/4 left-1/4 w-2 h-2 bg-[hsl(var(--aqua))]/20 rounded-full animate-ping"
+          style={{ animationDuration: "3s" }}
+        />
+        <div
+          className="absolute top-1/3 right-1/3 w-3 h-3 bg-[hsl(var(--aqua))]/10 rounded-full animate-pulse"
+          style={{ animationDuration: "4s" }}
+        />
+        <div
+          className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-[hsl(var(--aqua))]/15 rounded-full animate-ping"
+          style={{ animationDuration: "5s" }}
+        />
+        <div
+          className="absolute top-1/2 left-1/3 w-4 h-4 bg-[hsl(var(--aqua))]/8 rounded-full animate-pulse"
+          style={{ animationDuration: "6s" }}
+        />
       </div>
 
       {/* Morphing Blob Shapes */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
         <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-[hsl(var(--aqua))]/10 rounded-full blur-3xl animate-blob" />
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-[hsl(var(--aqua))]/10 rounded-full blur-3xl animate-blob" style={{ animationDelay: '2s' }} />
+        <div
+          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-[hsl(var(--aqua))]/10 rounded-full blur-3xl animate-blob"
+          style={{ animationDelay: "2s" }}
+        />
       </div>
 
       {/* Card with Glow Effect */}
       <Card className="w-full max-w-md shadow-2xl border-border/50 backdrop-blur-sm bg-card/95 animate-fadeIn relative z-10 group">
-
-
         <div className="relative">
           <CardHeader className="space-y-1 pb-4">
             <div className="flex justify-center mb-4">
@@ -156,7 +207,10 @@ export default function SignIn() {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+            <div
+              className="space-y-2 animate-fadeIn"
+              style={{ animationDelay: "0.2s" }}
+            >
               <label className="text-sm font-medium">Email</label>
               <div className="relative group">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-[hsl(var(--aqua))] transition-colors" />
@@ -171,7 +225,10 @@ export default function SignIn() {
               </div>
             </div>
 
-            <div className="space-y-2 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+            <div
+              className="space-y-2 animate-fadeIn"
+              style={{ animationDelay: "0.3s" }}
+            >
               <label className="text-sm font-medium">Password</label>
               <div className="relative group">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-[hsl(var(--aqua))] transition-colors" />
@@ -189,18 +246,27 @@ export default function SignIn() {
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between animate-fadeIn" style={{ animationDelay: '0.4s' }}>
+            <div
+              className="flex items-center justify-between animate-fadeIn"
+              style={{ animationDelay: "0.4s" }}
+            >
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="remember"
                   checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setRememberMe(checked as boolean)
+                  }
                 />
                 <label
                   htmlFor="remember"
@@ -212,7 +278,9 @@ export default function SignIn() {
               <button
                 type="button"
                 className="text-sm text-[hsl(var(--aqua))] hover:underline font-medium"
-                onClick={() => toast.info("Password reset feature coming soon!")}
+                onClick={() =>
+                  toast.info("Password reset feature coming soon!")
+                }
               >
                 Forgot password?
               </button>
@@ -220,7 +288,7 @@ export default function SignIn() {
 
             <Button
               className="w-full gap-2 bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white shadow-lg hover:shadow-xl hover:shadow-[hsl(var(--aqua))]/20 transition-all animate-fadeIn"
-              style={{ animationDelay: '0.5s' }}
+              style={{ animationDelay: "0.5s" }}
               onClick={handleLogin}
               disabled={loading}
             >
@@ -232,45 +300,72 @@ export default function SignIn() {
               Sign In
             </Button>
 
-            <div className="relative my-4 animate-fadeIn" style={{ animationDelay: '0.55s' }}>
+            <div
+              className="relative my-4 animate-fadeIn"
+              style={{ animationDelay: "0.55s" }}
+            >
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                <span className="bg-card px-2 text-muted-foreground">
+                  Or continue with
+                </span>
               </div>
             </div>
 
-            <div className="w-full animate-fadeIn" style={{ animationDelay: '0.6s' }}>
-              <Button variant="outline" className="w-full gap-2 hover:bg-[hsl(var(--aqua))]/10 hover:text-[hsl(var(--aqua))] hover:border-[hsl(var(--aqua))]/50 transition-all">
-                <svg className="h-4 w-4" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                  <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                </svg>
-                Continue with Google
+            <div
+              className="w-full animate-fadeIn"
+              style={{ animationDelay: "0.6s" }}
+            >
+              <Button
+                variant="outline"
+                className="w-full gap-2 hover:bg-[hsl(var(--aqua))]/10 hover:text-[hsl(var(--aqua))] hover:border-[hsl(var(--aqua))]/50 transition-all"
+              >
+                <button
+                  onClick={handleGoogleAuth}
+                  className="w-full bg-white border border-gray-300 text-black font-semibold py-2 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                >
+                  <img
+                    src="https://www.svgrepo.com/show/475656/google-color.svg"
+                    alt="Google"
+                    className="w-5 h-5"
+                  />
+                  Continue with Google
+                </button>
               </Button>
             </div>
 
-            <div className="text-center text-sm text-soft-muted animate-fadeIn mt-4" style={{ animationDelay: '0.65s' }}>
+            <div
+              className="text-center text-sm text-soft-muted animate-fadeIn mt-4"
+              style={{ animationDelay: "0.65s" }}
+            >
               Don't have an account?{" "}
               <button
                 className="text-[hsl(var(--aqua))] hover:underline font-medium"
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate("/signup")}
               >
                 Sign Up
               </button>
             </div>
 
             {/* Terms & Privacy */}
-            <div className="text-center text-xs text-muted-foreground pt-2 animate-fadeIn" style={{ animationDelay: '0.7s' }}>
+            <div
+              className="text-center text-xs text-muted-foreground pt-2 animate-fadeIn"
+              style={{ animationDelay: "0.7s" }}
+            >
               By signing in, you agree to our{" "}
-              <button className="text-[hsl(var(--aqua))] hover:underline" onClick={() => toast.info("Terms coming soon")}>
+              <button
+                className="text-[hsl(var(--aqua))] hover:underline"
+                onClick={() => toast.info("Terms coming soon")}
+              >
                 Terms of Service
               </button>{" "}
               and{" "}
-              <button className="text-[hsl(var(--aqua))] hover:underline" onClick={() => toast.info("Privacy Policy coming soon")}>
+              <button
+                className="text-[hsl(var(--aqua))] hover:underline"
+                onClick={() => toast.info("Privacy Policy coming soon")}
+              >
                 Privacy Policy
               </button>
             </div>
