@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
+import {
   Form,
   FormControl,
   FormField,
@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Block } from "@/components/types/types";
 
 interface ScheduleEvent {
   id: string;
@@ -158,6 +159,12 @@ const events: ScheduleEvent[] = [
   },
 ];
 
+const mockBlocks: Block[] = [
+  { org_id: "org-1", block_name: "Block A", block_id: "blk-1", location: "North Wing" },
+  { org_id: "org-1", block_name: "Block B", block_id: "blk-2", location: "South Wing" },
+  { org_id: "org-1", block_name: "Block C", block_id: "blk-3", location: "East Wing" },
+];
+
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   deviceId: z.string().min(1, "Device is required"),
@@ -262,13 +269,13 @@ export default function Schedule() {
 
     // Add to the schedule events
     setScheduleEvents(prev => [...prev, newEvent]);
-    
+
     // Close the modal
     setIsCreateModalOpen(false);
-    
+
     // Reset the form
     form.reset();
-    
+
     // Show success message
     toast.success("Schedule created successfully");
   };
@@ -318,7 +325,7 @@ export default function Schedule() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="deviceId"
@@ -343,7 +350,7 @@ export default function Schedule() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -358,7 +365,7 @@ export default function Schedule() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="durationHours"
@@ -373,7 +380,7 @@ export default function Schedule() {
                   )}
                 />
               </div>
-              
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsCreateModalOpen(false)}>
                   Cancel
@@ -384,7 +391,7 @@ export default function Schedule() {
           </Form>
         </DialogContent>
       </Dialog>
-      
+
       {/* Top Toolbar */}
       <Card className="bg-gradient-card shadow-soft-lg border-border/50">
         <CardHeader className="border-b border-border/50 bg-secondary/5 p-4 transition-smooth">
@@ -397,12 +404,13 @@ export default function Schedule() {
               Refresh
             </Button>
           </div>
-          
+
           <h1 className="text-2xl font-bold tracking-tight mb-6 text-soft">Schedule Manager</h1>
-          
+
           <div className="flex flex-wrap items-center gap-4">
             {/* 1. Block Selector */}
             <BlockSelector
+              availableBlocks={mockBlocks}
               selectedBlocks={selectedBlocks}
               onBlocksChange={setSelectedBlocks}
               compact
@@ -450,13 +458,13 @@ export default function Schedule() {
             <Button title="Reset filters" aria-label="Reset filters" variant="ghost" onClick={handleReset} className="text-soft-muted h-9 hover:text-soft transition-smooth">
               Reset
             </Button>
-            
+
             {/* 5. Add Schedule (primary) */}
             <Button title="Add schedule" aria-label="Add schedule" className="gap-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 h-9 shadow-soft-sm hover:shadow-soft-md transition-smooth hover:-translate-y-0.5" onClick={handleAddSchedule}>
               <Plus className="h-4 w-4" />
               Add Schedule
             </Button>
-            
+
             {/* 6. Refresh */}
             <Button title="Refresh" aria-label="Refresh" variant="outline" size="icon" className="h-9 w-9 hover:shadow-soft-sm transition-smooth" onClick={handleRefresh}>
               <RotateCw className="h-4 w-4" />

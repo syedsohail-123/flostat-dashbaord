@@ -9,6 +9,10 @@ interface SignUpData {
   email: string;
   password: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
+  contactNumber?: string;
+  conformPassword?: string;
 }
 
 interface OrgData {
@@ -40,15 +44,24 @@ interface DeviceReportParams {
 
 class ApiService {
   private baseUrl: string;
-  private authToken: string | null = null;
+  private token: string | null = null;
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl;
   }
 
-  // Method to set the auth token
   setAuthToken(token: string | null) {
-    this.authToken = token;
+    this.token = token;
+  }
+
+  private getHeaders(): HeadersInit {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    return headers;
   }
 
   // Auth endpoints
@@ -60,11 +73,12 @@ class ApiService {
       },
       body: JSON.stringify(credentials),
     });
-    
+
     if (!response.ok) {
-      throw new Error('Login failed');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Login failed');
     }
-    
+
     return response.json();
   }
 
@@ -76,11 +90,12 @@ class ApiService {
       },
       body: JSON.stringify(data),
     });
-    
+
     if (!response.ok) {
-      throw new Error('Sign up failed');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Sign up failed');
     }
-    
+
     return response.json();
   }
 
@@ -94,49 +109,31 @@ class ApiService {
     });
   }
 
-  async createOrganization(orgData: OrgData): Promise<any> {
-    const response = await fetch(`${this.baseUrl}/api/v1/org/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.authToken ? { 'Authorization': `Bearer ${this.authToken}` } : {}),
-      },
-      body: JSON.stringify(orgData),
+  async getUserOrganizations(): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/api/v1/user/getOrgsUser`, {
+      method: 'GET',
+      headers: this.getHeaders(),
     });
-    
+
     if (!response.ok) {
-      throw new Error('Failed to create organization');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to fetch user organizations');
     }
-    
+
     return response.json();
   }
 
-  async getUserOrganizations(): Promise<any> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    // Add auth token if available
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`;
-    }
-    
-    const response = await fetch(`${this.baseUrl}/api/v1/user/getOrgsUser`, {
-      method: 'GET',
-      headers,
+  async createOrganization(orgData: OrgData): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/api/v1/org/`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(orgData),
     });
-    
+
     if (!response.ok) {
-      const errorText = await response.text();
-      
-      // If it's an auth error, provide a more helpful message
-      if (response.status === 400 && errorText.includes("No token provided")) {
-        throw new Error("Authentication required. Please log in to view organizations.");
-      }
-      
-      throw new Error(`Failed to fetch user organizations: ${response.status} ${response.statusText} - ${errorText}`);       
+      throw new Error('Failed to create organization');
     }
-    
+
     return response.json();
   }
 
@@ -144,34 +141,28 @@ class ApiService {
   async getDevices(orgId: string): Promise<any> {
     const response = await fetch(`${this.baseUrl}/api/v1/device/getOrgDevices`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.authToken ? { 'Authorization': `Bearer ${this.authToken}` } : {}),
-      },
+      headers: this.getHeaders(),
       body: JSON.stringify({ org_id: orgId }),
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch devices');
     }
-    
+
     return response.json();
   }
 
   async createDevice(deviceData: CreateDeviceData): Promise<any> {
     const response = await fetch(`${this.baseUrl}/api/v1/device/create`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.authToken ? { 'Authorization': `Bearer ${this.authToken}` } : {}),
-      },
+      headers: this.getHeaders(),
       body: JSON.stringify(deviceData),
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to create device');
     }
-    
+
     return response.json();
   }
 
@@ -179,87 +170,44 @@ class ApiService {
   async getUsers(orgId: string): Promise<any> {
     const response = await fetch(`${this.baseUrl}/api/v1/user/getOrgsUser`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.authToken ? { 'Authorization': `Bearer ${this.authToken}` } : {}),
-      },
+      headers: this.getHeaders(),
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch users');
     }
-    
+
     return response.json();
   }
 
   // Report endpoints
   async getTankRelatedReport(params: TankRelatedReportParams): Promise<any> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    // Add auth token if available
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`;
-    }
-    
     const response = await fetch(`${this.baseUrl}/api/v1/report/tankRelatedReport`, {
       method: 'POST',
-      headers,
+      headers: this.getHeaders(),
       body: JSON.stringify(params),
     });
-    
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Error response:", errorText);
-      
-      // If it's an auth error, provide a more helpful message
-      if (response.status === 400 && errorText.includes("No token provided")) {
-        throw new Error("Authentication required. Please log in to view reports.");
-      }
-      
-      // Handle organization access error
-      if (response.status === 404 && errorText.includes("User does not exit in this org")) {
-        throw new Error("User does not exit in this org!");
-      }
-      
-      throw new Error(`Failed to fetch tank related report: ${response.status} ${response.statusText} - ${errorText}`);      
+      throw new Error('Failed to fetch tank related report');
     }
-    
+
     return response.json();
   }
 
   async getDeviceReport(params: DeviceReportParams): Promise<any> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    // Add auth token if available
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`;
-    }
-    
     const response = await fetch(`${this.baseUrl}/api/v1/report/deviceReport`, {
       method: 'POST',
-      headers,
+      headers: this.getHeaders(),
       body: JSON.stringify(params),
     });
-    
+
     if (!response.ok) {
-      const errorText = await response.text();
-      
-      // If it's an auth error, provide a more helpful message
-      if (response.status === 400 && errorText.includes("No token provided")) {
-        throw new Error("Authentication required. Please log in to view reports.");
-      }
-      
-      throw new Error(`Failed to fetch device report: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error('Failed to fetch device report');
     }
-    
+
     return response.json();
   }
-
-  
 }
 
 export const apiService = new ApiService();

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Activity, Droplets, Gauge, ThermometerSun, Power, AlertTriangle, Settings, Waves, Container } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BlockSelector } from "@/components/BlockSelector";
+import { Block } from "@/components/types/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiService } from "@/lib/api";
@@ -108,7 +109,7 @@ export default function SCADA() {
         }
         return d;
       }));
-      
+
       // In a real implementation, this would call the backend API to update the device state
       // await apiService.updateDeviceState(id, !devices.find(d => d.id === id)?.isOn);
       toast.success("Device state updated successfully");
@@ -156,6 +157,11 @@ export default function SCADA() {
         </div>
         <div className="flex gap-3 items-center">
           <BlockSelector
+            availableBlocks={Array.from(new Set(devices.map(d => d.block || ''))).filter(Boolean).map(blockName => ({
+              block_name: blockName,
+              org_id: "demo-org", // Mock org_id
+              block_id: blockName // Use name as ID for mock data
+            }))}
             selectedBlocks={selectedBlocks}
             onBlocksChange={setSelectedBlocks}
             label="Block"
@@ -203,13 +209,13 @@ export default function SCADA() {
                   <line x1="900" y1="180" x2="900" y2="260" />
                   <line x1="1000" y1="180" x2="900" y2="260" opacity="0.3" />
                   <line x1="1100" y1="180" x2="900" y2="260" />
-                  
+
                   {/* Motor to Pump connections */}
                   <line x1="360" y1="290" x2="360" y2="350" />
                   <line x1="540" y1="290" x2="540" y2="350" />
                   <line x1="720" y1="290" x2="720" y2="350" />
                   <line x1="900" y1="290" x2="900" y2="350" />
-                  
+
                   {/* Pump to Sump connections */}
                   <line x1="360" y1="380" x2="460" y2="460" />
                   <line x1="540" y1="380" x2="460" y2="460" opacity="0.3" />
@@ -227,9 +233,8 @@ export default function SCADA() {
                       width="60"
                       height="80"
                       rx="8"
-                      className={`cursor-pointer transition-all ${
-                        tank.status === 'error' ? 'fill-destructive/80' : 'fill-[hsl(var(--aqua))]/80'
-                      }`}
+                      className={`cursor-pointer transition-all ${tank.status === 'error' ? 'fill-destructive/80' : 'fill-[hsl(var(--aqua))]/80'
+                        }`}
                       stroke={tank.status === 'error' ? 'hsl(var(--destructive))' : 'hsl(var(--aqua))'}
                       strokeWidth="2"
                     />
@@ -262,9 +267,8 @@ export default function SCADA() {
                       width="80"
                       height="30"
                       rx="4"
-                      className={`cursor-pointer ${
-                        motor.status === 'error' ? 'fill-destructive/80' : 'fill-success/80'
-                      }`}
+                      className={`cursor-pointer ${motor.status === 'error' ? 'fill-destructive/80' : 'fill-success/80'
+                        }`}
                       stroke={motor.status === 'error' ? 'hsl(var(--destructive))' : 'hsl(var(--success))'}
                       strokeWidth="2"
                     />
@@ -281,13 +285,12 @@ export default function SCADA() {
                       cx="0"
                       cy="15"
                       r="25"
-                      className={`cursor-pointer ${
-                        pump.status === 'error' ? 'fill-destructive/80' : 
-                        pump.status === 'active' ? 'fill-success/80' : 'fill-muted/80'
-                      }`}
+                      className={`cursor-pointer ${pump.status === 'error' ? 'fill-destructive/80' :
+                          pump.status === 'active' ? 'fill-success/80' : 'fill-muted/80'
+                        }`}
                       stroke={
-                        pump.status === 'error' ? 'hsl(var(--destructive))' : 
-                        pump.status === 'active' ? 'hsl(var(--success))' : 'hsl(var(--muted))'
+                        pump.status === 'error' ? 'hsl(var(--destructive))' :
+                          pump.status === 'active' ? 'hsl(var(--success))' : 'hsl(var(--muted))'
                       }
                       strokeWidth="2"
                     />
@@ -349,115 +352,115 @@ export default function SCADA() {
                   return selectedBlocks.includes(device.block || '');
                 })
                 .map(device => {
-                const isExpanded = expanded.has(device.id);
-                const interactionDisabled = scadaMode === 'auto';
-                const panelId = `device-panel-${device.id}`;
-                return (
-                  <div
-                    key={device.id}
-                    className={`border rounded-md transition-all ${selectedDevice?.id === device.id ? 'ring-2 ring-[hsl(var(--aqua))] bg-muted/40' : 'bg-card'} hover:bg-muted/30 ${interactionDisabled ? 'opacity-60' : ''}`}
-                  >
-                    {/* Header Row */}
-                    <div className="flex items-center justify-between px-3 py-2">
-                      <button
-                        type="button"
-                        onClick={() => { toggleExpand(device.id); setSelectedDevice(device); }}
-                        className="flex items-center gap-2 text-left flex-1 min-w-0"
-                        aria-expanded={isExpanded}
-                        aria-controls={panelId}
-                      >
-                        {device.type === 'pump' && <Droplets className="h-4 w-4 text-[hsl(var(--aqua))]" />}
-                        {device.type === 'valve' && <Gauge className="h-4 w-4 text-success" />}
-                        {device.type === 'tank' && <Container className="h-4 w-4 text-warning" />}
-                        <span className="font-medium text-sm truncate">{device.name}</span>
-                        <span className="text-xs text-muted-foreground">#{device.id}</span>
-                      </button>
-                      <div className="flex items-center gap-2 ml-2">
-                        {(device.type === 'pump' || device.type === 'valve') && (
-                          <div className="flex items-center gap-1">
-                            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{device.isOn ? (device.type === 'pump' ? 'RUN' : 'OPEN') : (device.type === 'pump' ? 'STOP' : 'CLOSE')}</span>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span>
-                                    <Switch
-                                      checked={device.isOn}
-                                      onCheckedChange={() => togglePower(device.id)}
-                                      disabled={interactionDisabled}
-                                      aria-label={interactionDisabled ? 'Disabled in Auto mode' : (device.type === 'pump' ? (device.isOn ? 'Turn pump off' : 'Turn pump on') : (device.isOn ? 'Close valve' : 'Open valve'))}
-                                    />
-                                  </span>
-                                </TooltipTrigger>
-                                {interactionDisabled && (
-                                  <TooltipContent>Manual controls disabled in Auto mode</TooltipContent>
-                                )}
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
-                        )}
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] px-1.5 py-0 h-5 ${device.isOn ? 'bg-success/10 text-success border-success/20' : 'bg-muted text-muted-foreground'}`}
-                        >
-                          {device.isOn ? 'ON' : 'OFF'}
-                        </Badge>
+                  const isExpanded = expanded.has(device.id);
+                  const interactionDisabled = scadaMode === 'auto';
+                  const panelId = `device-panel-${device.id}`;
+                  return (
+                    <div
+                      key={device.id}
+                      className={`border rounded-md transition-all ${selectedDevice?.id === device.id ? 'ring-2 ring-[hsl(var(--aqua))] bg-muted/40' : 'bg-card'} hover:bg-muted/30 ${interactionDisabled ? 'opacity-60' : ''}`}
+                    >
+                      {/* Header Row */}
+                      <div className="flex items-center justify-between px-3 py-2">
                         <button
                           type="button"
                           onClick={() => { toggleExpand(device.id); setSelectedDevice(device); }}
-                          className="text-xs transition-transform"
+                          className="flex items-center gap-2 text-left flex-1 min-w-0"
                           aria-expanded={isExpanded}
                           aria-controls={panelId}
                         >
-                          <span className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
+                          {device.type === 'pump' && <Droplets className="h-4 w-4 text-[hsl(var(--aqua))]" />}
+                          {device.type === 'valve' && <Gauge className="h-4 w-4 text-success" />}
+                          {device.type === 'tank' && <Container className="h-4 w-4 text-warning" />}
+                          <span className="font-medium text-sm truncate">{device.name}</span>
+                          <span className="text-xs text-muted-foreground">#{device.id}</span>
                         </button>
-                      </div>
-                    </div>
-                    {/* Expanded Content */}
-                    {isExpanded && (
-                      <div id={panelId} role="region" aria-label={`${device.name} details`} className="px-3 pb-3 space-y-2 text-xs animate-slideUp">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="font-semibold text-sm">Value:</span>
-                            <span className="font-mono text-sm">{device.value}{device.unit}</span>
-                          </div>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="font-semibold text-sm">Status:</span>
-                            <StatusBadge status={device.status} />
-                          </div>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="font-semibold text-sm">Location:</span>
-                            <span className="text-muted-foreground">{device.location}</span>
-                          </div>
+                        <div className="flex items-center gap-2 ml-2">
+                          {(device.type === 'pump' || device.type === 'valve') && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{device.isOn ? (device.type === 'pump' ? 'RUN' : 'OPEN') : (device.type === 'pump' ? 'STOP' : 'CLOSE')}</span>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span>
+                                      <Switch
+                                        checked={device.isOn}
+                                        onCheckedChange={() => togglePower(device.id)}
+                                        disabled={interactionDisabled}
+                                        aria-label={interactionDisabled ? 'Disabled in Auto mode' : (device.type === 'pump' ? (device.isOn ? 'Turn pump off' : 'Turn pump on') : (device.isOn ? 'Close valve' : 'Open valve'))}
+                                      />
+                                    </span>
+                                  </TooltipTrigger>
+                                  {interactionDisabled && (
+                                    <TooltipContent>Manual controls disabled in Auto mode</TooltipContent>
+                                  )}
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                          )}
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-1.5 py-0 h-5 ${device.isOn ? 'bg-success/10 text-success border-success/20' : 'bg-muted text-muted-foreground'}`}
+                          >
+                            {device.isOn ? 'ON' : 'OFF'}
+                          </Badge>
+                          <button
+                            type="button"
+                            onClick={() => { toggleExpand(device.id); setSelectedDevice(device); }}
+                            className="text-xs transition-transform"
+                            aria-expanded={isExpanded}
+                            aria-controls={panelId}
+                          >
+                            <span className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
+                          </button>
                         </div>
-                        {device.type === 'pump' && (
-                          <div className="pt-1">
-                            <div className="text-[10px] font-medium text-muted-foreground mb-1">Speed Control (simulated)</div>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span>
-                                    <Slider
-                                      defaultValue={[device.value ? Math.min(100, Math.round(device.value / 3200 * 100)) : 0]}
-                                      max={100}
-                                      step={5}
-                                      className="w-[140px]"
-                                      disabled={interactionDisabled}
-                                      aria-label={interactionDisabled ? 'Disabled in Auto mode' : 'Adjust pump speed'}
-                                    />
-                                  </span>
-                                </TooltipTrigger>
-                                {interactionDisabled && (
-                                  <TooltipContent>Manual controls disabled in Auto mode</TooltipContent>
-                                )}
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
-                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                      {/* Expanded Content */}
+                      {isExpanded && (
+                        <div id={panelId} role="region" aria-label={`${device.name} details`} className="px-3 pb-3 space-y-2 text-xs animate-slideUp">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="font-semibold text-sm">Value:</span>
+                              <span className="font-mono text-sm">{device.value}{device.unit}</span>
+                            </div>
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="font-semibold text-sm">Status:</span>
+                              <StatusBadge status={device.status} />
+                            </div>
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="font-semibold text-sm">Location:</span>
+                              <span className="text-muted-foreground">{device.location}</span>
+                            </div>
+                          </div>
+                          {device.type === 'pump' && (
+                            <div className="pt-1">
+                              <div className="text-[10px] font-medium text-muted-foreground mb-1">Speed Control (simulated)</div>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span>
+                                      <Slider
+                                        defaultValue={[device.value ? Math.min(100, Math.round(device.value / 3200 * 100)) : 0]}
+                                        max={100}
+                                        step={5}
+                                        className="w-[140px]"
+                                        disabled={interactionDisabled}
+                                        aria-label={interactionDisabled ? 'Disabled in Auto mode' : 'Adjust pump speed'}
+                                      />
+                                    </span>
+                                  </TooltipTrigger>
+                                  {interactionDisabled && (
+                                    <TooltipContent>Manual controls disabled in Auto mode</TooltipContent>
+                                  )}
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
             </CardContent>
           </Card>
 
