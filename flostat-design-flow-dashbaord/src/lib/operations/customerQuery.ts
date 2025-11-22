@@ -5,20 +5,24 @@ import { apiClient } from "../httpClient";
 
 // ------------------ TYPES ------------------
 export interface CustomerQuery {
-  id: string;
+  query_id: string;
   org_id: string;
-  title: string;
+  created_by: string;
+  created_at: string;
+  queryType: string;
   description: string;
-  status?: string;
-  created_at?: string;
+  attachment?: string;
+  status: string;
+  messages?: ChatMessage[];
+  updated_by?: string;
   updated_at?: string;
 }
 
 export interface ChatMessage {
-  id: string;
-  sender: string;
-  message: string;
   timestamp: string;
+  user: string;
+  userType: 'CUSTOMER' | 'FLOSTAT';
+  message: string;
 }
 
 // ------------------ API FUNCTIONS ------------------
@@ -39,15 +43,16 @@ export const createQuery = async (
 ): Promise<CustomerQuery | null> => {
   const toastId = toast.loading("Creating query...");
   try {
-     const res = await apiClient({
+    const res = await apiClient({
       method: "POST",
-      url:CREATE_QUERY_API,
+      url: CREATE_QUERY_API,
       bodyData: data,
-      headers: { Authorization: `Bearer ${token}`,
-      org_id
-         },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        org_id
+      },
     });
-   
+
     if (!res.data.success) {
       toast.error(res.data.message);
       return null;
@@ -69,13 +74,13 @@ export const updateQuery = async (
 ): Promise<CustomerQuery | null> => {
   const toastId = toast.loading("Updating query...");
   try {
-     const res = await apiClient({
+    const res = await apiClient({
       method: "PUT",
-      url:UPDATE_QUERY_API,
+      url: UPDATE_QUERY_API,
       bodyData: data,
       headers: { Authorization: `Bearer ${token}` },
     });
-     if (!res.data.success) {
+    if (!res.data.success) {
       toast.error(res.data.message);
       return null;
     }
@@ -96,13 +101,13 @@ export const deleteQuery = async (
 ): Promise<CustomerQuery | null> => {
   const toastId = toast.loading("Deleting query...");
   try {
-     const res = await apiClient({
+    const res = await apiClient({
       method: "DELETE",
-      url:DELETE_QUERY_API,
+      url: DELETE_QUERY_API,
       bodyData: data,
       headers: { Authorization: `Bearer ${token}` },
     });
-  if (!res.data.success) {
+    if (!res.data.success) {
       toast.error(res.data.message);
       return null;
     }
@@ -123,9 +128,9 @@ export const getQuery = async (
 ): Promise<CustomerQuery | null> => {
   const toastId = toast.loading("Fetching query...");
   try {
-     const res = await apiClient({
+    const res = await apiClient({
       method: "POST",
-      url:GET_QUERY_API,
+      url: GET_QUERY_API,
       bodyData: data,
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -150,9 +155,9 @@ export const getAllOrgQuery = async (
 ): Promise<CustomerQuery[] | null> => {
   const toastId = toast.loading("Fetching all queries...");
   try {
-     const res = await apiClient({
+    const res = await apiClient({
       method: "POST",
-      url:GET_ALL_ORG_QUERY_API,
+      url: GET_ALL_ORG_QUERY_API,
       bodyData: data,
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -177,13 +182,13 @@ export const customerSupportChat = async (
 ): Promise<ChatMessage[] | null> => {
   const toastId = toast.loading("Sending message...");
   try {
-     const res = await apiClient({
+    const res = await apiClient({
       method: "POST",
-      url:CUSTOMER_SUPPORT_CHAT_API,
+      url: CUSTOMER_SUPPORT_CHAT_API,
       bodyData: data,
       headers: { Authorization: `Bearer ${token}` },
     });
-     if (!res.data.success) {
+    if (!res.data.success) {
       toast.error(res.data.message);
       return null;
     }

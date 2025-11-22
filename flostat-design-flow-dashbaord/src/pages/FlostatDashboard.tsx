@@ -6,6 +6,7 @@ import Users from "./Users";
 import Schedule from "./Schedule";
 import Logs from "./Logs";
 import Reports from "./Reports";
+import Support from "./Support";
 import OCR from "./OCR";
 import SCADA from "./SCADA";
 import { useDispatch, useSelector } from "react-redux";
@@ -18,26 +19,26 @@ import Settings from "./Settings";
 
 
 const FlostatDashboard = ({ components }) => {
-    const dispatch = useDispatch();
-    console.log("IN FLOSTAT dashboard: ",components)
-      const org_id = useSelector((state: RootState)=> state.org.org_id);
-      const token = useSelector((state: RootState)=> state.auth.token);
-      // fetch topics of the org
-      useEffect(()=>{
-        const fetchTopicsOfOrg = async(org_id)=>{
-           const result = await getOrgTopics(org_id,token);
-           console.log("Result topic fetch : ",result);
-           if(result){
-            dispatch(setTopics(result));
-           }
-        }
-        if(org_id && token){
-          fetchTopicsOfOrg(org_id);
-        }else{
-          console.error("Missing: ",token,org_id)
-          toast.error("Missing params like org_id or token ");
-        }
-      },[org_id])
+  const dispatch = useDispatch();
+  console.log("IN FLOSTAT dashboard: ", components)
+  const org_id = useSelector((state: RootState) => state.org.org_id);
+  const token = useSelector((state: RootState) => state.auth.token);
+  // fetch topics of the org
+  useEffect(() => {
+    const fetchTopicsOfOrg = async (org_id) => {
+      const result = await getOrgTopics(org_id, token);
+      console.log("Result topic fetch : ", result);
+      if (result) {
+        dispatch(setTopics(result));
+      }
+    }
+    if (org_id && token) {
+      fetchTopicsOfOrg(org_id);
+    } else {
+      console.error("Missing: ", token, org_id)
+      toast.error("Missing params like org_id or token ");
+    }
+  }, [org_id])
   return (
     <div>
       {components === "dashboard" && <Dashboard />},
@@ -46,6 +47,7 @@ const FlostatDashboard = ({ components }) => {
       {components === "schedule" && <Schedule />},
       {components === "logs" && <Logs />},
       {components === "reports" && <Reports />},
+      {components === "support" && <Support />},
       {components === "ocr" && <OCR />},
       {components === "scada" && <SCADA />},
       {components === "customer-support" && <CustomerService />},

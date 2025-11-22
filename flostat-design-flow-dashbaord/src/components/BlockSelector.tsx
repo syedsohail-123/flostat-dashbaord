@@ -45,6 +45,8 @@ export function BlockSelector({
       ? selectedBlocks.filter((name) => name !== blockName)
       : [...selectedBlocks, blockName];
     onBlocksChange(newSelection);
+    //close the popover after selection
+    setOpen(false)
   };
 
   const clearAll = () => {

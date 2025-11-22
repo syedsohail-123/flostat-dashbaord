@@ -177,25 +177,25 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editUserOpen, setEditUserOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
-  const [userModel,setUserModel] =  useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null >(null);
-  const [modelMode,setModelMode] =  useState<string>("add");
+  const [userModel, setUserModel] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [modelMode, setModelMode] = useState<string>("add");
   const dispatch = useDispatch();
-  const orgUsers = useSelector((state: RootState)=> state.org.orgUsers);
-  const token = useSelector((state: RootState)=> state.auth.token);
-  const org_id = useSelector((state: RootState)=> state.org.org_id);
-  console.log("Org user: ",orgUsers,org_id,token)
+  const orgUsers = useSelector((state: RootState) => state.org.orgUsers);
+  const token = useSelector((state: RootState) => state.auth.token);
+  const org_id = useSelector((state: RootState) => state.org.org_id);
+  console.log("Org user: ", orgUsers, org_id, token)
   useEffect(() => {
-    
+
     fetchUsers();
   }, []); // Add contextUsers as dependency
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const result = await getAllUsersForOrg(org_id,token);
-      if(result){
-         dispatch(setOrgUsers(result));
+      const result = await getAllUsersForOrg(org_id, token);
+      if (result) {
+        dispatch(setOrgUsers(result));
       }
     } catch (error) {
       toast.error("Failed to fetch users");
@@ -205,33 +205,35 @@ export default function Users() {
     }
   };
 
-  const handleAddUser =  () => {
+  const handleAddUser = () => {
     setModelMode("add");
-  setSelectedUser(null);
+    setSelectedUser(null);
     setUserModel(true);
     toast.info("Add user functionality would be implemented here");
   };
 
   const handleEditUser = (updatedUser: User) => {
     console.log("Edit user ");
-      setModelMode("update");
-                          setSelectedUser(updatedUser);
-                          setUserModel(true);
+    setModelMode("update");
+    setSelectedUser(updatedUser);
+    setUserModel(true);
   };
 
   const handleDeleteUser = (user: User) => {
-     setModelMode("remove");
-                          setSelectedUser(user);
-                          setUserModel(true);
+    setModelMode("remove");
+    setSelectedUser(user);
+    setUserModel(true);
   };
 
-  const filteredUsers = orgUsers &&  orgUsers.filter(user => 
-    user.orgName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = (orgUsers ?? []).filter(user =>
+  (user.orgName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-  console.log("Filter user : ",filteredUsers)
- const label = filteredUsers &&  filteredUsers.filter((u) => u.status === "pending").length
- console.log("Label p: ",label)
+  console.log("Filter user : ", filteredUsers)
+
+  const label = (orgUsers ?? []).filter((u) => u.status === "pending").length;
+  console.log("Label p: ", label)
+
   if (loading) {
     return (
       <div className="min-h-[70vh] w-full flex items-center justify-center">
@@ -269,7 +271,7 @@ export default function Users() {
       <div className="grid gap-4 md:grid-cols-4">
         {giveRoles.map((role) => {
           const count = filteredUsers.filter((u) => u.role === role).length;
-          
+
           return (
             <div key={role} className={"rounded-lg border bg-card p-4 shadow-elevation-1 flex flex-col"}>
               <div className="flex items-center justify-between">
@@ -278,10 +280,10 @@ export default function Users() {
               </div>
               <div className="mt-3">
                 <span
-                  className={"inline-flex items-center justify-center rounded-full font-bold text-sm h-10 w-10 " + (role==="pending"&& label ? "bg-[#C00000] text-white shadow-[0_0_0_6px_rgba(192,0,0,0.25)]" : "bg-muted text-soft")}
+                  className={"inline-flex items-center justify-center rounded-full font-bold text-sm h-10 w-10 " + (role === "pending" && label ? "bg-[#C00000] text-white shadow-[0_0_0_6px_rgba(192,0,0,0.25)]" : "bg-muted text-soft")}
                   aria-label={`${count} ${label}`}
                 >
-                  {role==="pending" ?label:count}
+                  {role === "pending" ? label : count}
                 </span>
               </div>
             </div>
@@ -322,19 +324,18 @@ export default function Users() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => {
-                       handleEditUser(user);
-    
+                        handleEditUser(user);
                       }}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="icon" 
+                    <Button
+                      variant="destructive"
+                      size="icon"
                       onClick={() => handleDeleteUser(user)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -346,8 +347,8 @@ export default function Users() {
           </TableBody>
         </Table>
       </div>
-            
-      {userModel && <CreateUserModal setUserModel={setUserModel} mode={modelMode} user={selectedUser} /> }
+
+      {userModel && <CreateUserModal setUserModel={setUserModel} mode={modelMode} user={selectedUser} />}
       {/* Edit User Modal */}
       {/* <EditUserModal
         open={editUserOpen}
