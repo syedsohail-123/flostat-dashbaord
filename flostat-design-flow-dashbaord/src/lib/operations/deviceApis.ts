@@ -68,8 +68,7 @@ export const updateThreshold = async (data: any, token: string): Promise<Device 
 
 // Create device
 export const deviceCreate = async (
-  org_id: string,
-  device_type: string,
+  data: any,
   token: string
 ): Promise<Device[] | null> => {
   const toastId = toast.loading("Creating device...");
@@ -78,7 +77,7 @@ export const deviceCreate = async (
       {
         method: "POST",
         url: DEVICE_CREATE,
-        bodyData: { org_id, device_type },
+        bodyData: data,
       },
       token
     );
@@ -119,7 +118,7 @@ export const deviceUpdate = async (data: DevicePayload, token: string): Promise<
 
     toast.success(res.data.message || "Device updated successfully");
     return res.data.devices ?? [];
- } catch (error: any) {
+  } catch (error: any) {
     console.error("Error in deviceUpdate:", error);
     toast.error(error?.response?.data?.message || error?.message || "Failed to update device");
     return null;

@@ -56,11 +56,15 @@ export const createSchedule = async (
     toast.success(response.message || "Schedule created successfully");
   } catch (error: any) {
     console.error("Error in createSchedule:", error);
-    toast.error(
-      error?.response?.data?.message ||
+    if (error?.response?.status === 409) {
+      toast.error("Schedule conflict: A schedule already exists for this time range.");
+    } else {
+      toast.error(
+        error?.response?.data?.message ||
         error?.message ||
         "Unexpected error while creating schedule"
-    );
+      );
+    }
   } finally {
     toast.dismiss(toastId);
   }
@@ -99,8 +103,8 @@ export const updateScheduleApis = async (
     console.error("Error in updateScheduleApis:", error);
     toast.error(
       error?.response?.data?.message ||
-        error?.message ||
-        "Unexpected error while updating schedule"
+      error?.message ||
+      "Unexpected error while updating schedule"
     );
   } finally {
     toast.dismiss(toastId);
@@ -139,8 +143,8 @@ export const deleteScheduleCall = async (
     console.error("Error in deleteScheduleCall:", error);
     toast.error(
       error?.response?.data?.message ||
-        error?.message ||
-        "Unexpected error while deleting schedule"
+      error?.message ||
+      "Unexpected error while deleting schedule"
     );
   } finally {
     toast.dismiss(toastId);
@@ -180,8 +184,8 @@ export const getScheduleByOrgId = async (
     console.error("Error in getScheduleByOrgId:", error);
     toast.error(
       error?.response?.data?.message ||
-        error?.message ||
-        "Unexpected error while fetching schedules"
+      error?.message ||
+      "Unexpected error while fetching schedules"
     );
   } finally {
     toast.dismiss(toastId);
@@ -220,8 +224,8 @@ export const getScheduleById = async (
     console.error("Error in getScheduleById:", error);
     toast.error(
       error?.response?.data?.message ||
-        error?.message ||
-        "Unexpected error while fetching schedule by ID"
+      error?.message ||
+      "Unexpected error while fetching schedule by ID"
     );
   } finally {
     toast.dismiss(toastId);

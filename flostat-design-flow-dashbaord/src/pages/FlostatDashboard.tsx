@@ -4,6 +4,7 @@ import Dashboard from "./Dashboard";
 import Devices from "./Devices";
 import Users from "./Users";
 import Schedule from "./Schedule";
+import ScheduleList from "./ScheduleList";
 import Logs from "./Logs";
 import Reports from "./Reports";
 import Support from "./Support";
@@ -44,7 +45,7 @@ const FlostatDashboard = ({ components }) => {
       {components === "dashboard" && <Dashboard />},
       {components === "devices" && <Devices />},
       {components === "users" && <Users />},
-      {components === "schedule" && <Schedule />},
+      {components === "schedule" && <ScheduleList />},
       {components === "logs" && <Logs />},
       {components === "reports" && <Reports />},
       {components === "support" && <Support />},

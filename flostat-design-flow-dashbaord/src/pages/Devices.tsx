@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { StatusBadge } from "@/components/StatusBadge";
-
 import {
   Table,
   TableBody,
@@ -27,146 +25,29 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, QrCode, Search, Edit, Trash2, Building2 } from "lucide-react";
 import { CreateBlockModal } from "@/components/CreateBlockModal";
-import { createBlock } from "@/lib/operations/blockApis";
-import { useSelector } from "react-redux";
+import { createBlock, getBlocksOfOrgId } from "@/lib/operations/blockApis";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store";
 import { deviceCreate, getOrgAllDevice } from "@/lib/operations/deviceApis";
-import { useDispatch } from "react-redux";
 import { setDevices } from "@/slice/deviceSlice";
 import { QrRegisterModal } from "@/components/QrRegisterModal";
-import { Device } from "@/components/types/types";
-
-const devices = [
-  {
-    id: "DEV-001",
-    name: "Pump 2",
-    type: "pump",
-    location: "Building A - Floor 1",
-    block: "block-a",
-    status: "active" as const,
-    lastSeen: "2 min ago",
-  },
-  {
-    id: "DEV-002",
-    name: "Tank 4",
-    type: "tank",
-    location: "Building A - Floor 2",
-    block: "block-a",
-    status: "active" as const,
-    lastSeen: "5 min ago",
-  },
-  {
-    id: "DEV-003",
-    name: "Valve 3",
-    type: "valve",
-    location: "Building B - Ground",
-    block: "block-b",
-    status: "active" as const,
-    lastSeen: "1 min ago",
-  },
-  {
-    id: "DEV-004",
-    name: "Pump 1",
-    type: "pump",
-    location: "Building B - Floor 1",
-    block: "block-b",
-    status: "inactive" as const,
-    lastSeen: "1 hour ago",
-  },
-  {
-    id: "DEV-005",
-    name: "Valve 1",
-    type: "valve",
-    location: "Building A - Floor 3",
-    block: "block-a",
-    status: "active" as const,
-    lastSeen: "3 min ago",
-  },
-  {
-    id: "DEV-006",
-    name: "Valve 4",
-    type: "valve",
-    location: "Building C - Ground",
-    block: "block-c",
-    status: "active" as const,
-    lastSeen: "10 min ago",
-  },
-  {
-    id: "DEV-007",
-    name: "Pump AHub",
-    type: "pump",
-    location: "Building C - Floor 2",
-    block: "block-c",
-    status: "active" as const,
-    lastSeen: "4 min ago",
-  },
-  {
-    id: "DEV-008",
-    name: "Tank Staff quaters",
-    type: "tank",
-    location: "Building A - Floor 1",
-    block: "block-a",
-    status: "warning" as const,
-    lastSeen: "1 min ago",
-  },
-  {
-    id: "DEV-009",
-    name: "Tank AHub",
-    type: "tank",
-    location: "Building D - Floor 1",
-    block: "block-d",
-    status: "warning" as const,
-    lastSeen: "2 min ago",
-  },
-  {
-    id: "DEV-010",
-    name: "Pump 3",
-    type: "pump",
-    location: "Building B - Ground",
-    block: "block-b",
-    status: "active" as const,
-    lastSeen: "5 min ago",
-  },
-  {
-    id: "DEV-011",
-    name: "Valve 2",
-    type: "valve",
-    location: "Building C - Floor 1",
-    block: "block-c",
-    status: "inactive" as const,
-    lastSeen: "15 min ago",
-  },
-];
+import { Device, Block } from "@/components/types/types";
 
 export default function Devices() {
   const [createBlockOpen, setCreateBlockOpen] = useState(false);
   const [createDeviceOpen, setCreateDeviceOpen] = useState(false);
   const [qrRegisterOpen, setQrRegisterOpen] = useState(false);
-  const [updateDeviceOpen, setUpdateDeviceOpen] = useState(false);
   const [selectedDeviceType, setSelectedDeviceType] = useState("");
   const [modalMode, setModalMode] = useState<"qr" | "update" | "remove">("qr");
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
-  // const [deviceList, setDeviceList] = useState(devices);
+
   const org_id = useSelector((state: RootState) => state.org.org_id);
   const token = useSelector((state: RootState) => state.auth.token);
   const devices = useSelector((state: RootState) => state.device.devices);
   const dispatch = useDispatch();
-  const [qrForm, setQrForm] = useState({
-    block_name: "",
-    token: "",
-    name: "",
-  });
-  const [editingDevice, setEditingDevice] = useState<
-    (typeof devices)[0] | null
-  >(null);
-  const [editForm, setEditForm] = useState({
-    block: "",
-    name: "",
-  });
-  const [removeDeviceOpen, setRemoveDeviceOpen] = useState(false);
-  const [deviceToRemove, setDeviceToRemove] = useState<
-    (typeof devices)[0] | null
-  >(null);
+
+  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [selectedBlockId, setSelectedBlockId] = useState("");
 
   const handleCreateBlock = async (block: {
     block_name: string;
@@ -177,6 +58,9 @@ export default function Devices() {
     console.log("Creating block:", data);
     const result = await createBlock(data, token);
     console.log("Result block: ", result);
+    // Refresh blocks
+    const blockRes = await getBlocksOfOrgId(org_id, token);
+    if (blockRes) setBlocks(blockRes);
   };
 
   const handleCreateDevice = async () => {
@@ -184,8 +68,18 @@ export default function Devices() {
       alert("Please select a device type");
       return;
     }
+    if (!selectedBlockId) {
+      alert("Please select a block");
+      return;
+    }
 
-    const result = await deviceCreate(org_id, selectedDeviceType, token);
+    const data = {
+      org_id,
+      device_type: selectedDeviceType,
+      block_id: selectedBlockId
+    };
+
+    const result = await deviceCreate(data, token);
     if (result) {
       dispatch(setDevices(result));
     }
@@ -193,17 +87,24 @@ export default function Devices() {
     console.log("Device created:", result);
     setCreateDeviceOpen(false);
     setSelectedDeviceType("");
+    setSelectedBlockId("");
   };
- useEffect(()=>{
-    
-    const fetchDevicesOfOrg = async()=>{
-       const result = await getOrgAllDevice(org_id,token);
-       if(result){
+
+  useEffect(() => {
+    const fetchDevicesOfOrg = async () => {
+      const result = await getOrgAllDevice(org_id, token);
+      if (result) {
         dispatch(setDevices(result));
-       }
+      }
     }
+    const fetchBlocks = async () => {
+      const result = await getBlocksOfOrgId(org_id, token);
+      if (result) setBlocks(result);
+    };
+
     fetchDevicesOfOrg();
- },[])
+    fetchBlocks();
+  }, [org_id, token, dispatch]);
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -227,8 +128,8 @@ export default function Devices() {
           <Button
             className="gap-2 h-10 bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white shadow-soft-sm hover:shadow-soft-md transition-smooth hover:-translate-y-0.5"
             onClick={() => {
-              setSelectedDevice(null); // or set a device to edit
-              setModalMode("qr"); // choose "qr" | "update" | "remove"
+              setSelectedDevice(null);
+              setModalMode("qr");
               setQrRegisterOpen(true);
             }}
           >
@@ -251,6 +152,13 @@ export default function Devices() {
         onCreateBlock={handleCreateBlock}
       />
 
+      <QrRegisterModal
+        qrRegisterOpen={qrRegisterOpen}
+        setQrRegisterOpen={setQrRegisterOpen}
+        modalMode={modalMode}
+        device={selectedDevice}
+      />
+
       {/* Create Device Modal */}
       <Dialog open={createDeviceOpen} onOpenChange={setCreateDeviceOpen}>
         <DialogContent className="max-w-md">
@@ -261,6 +169,28 @@ export default function Devices() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Block Selection */}
+            <div>
+              <label className="text-sm font-medium text-center block mb-2">
+                Select Block
+              </label>
+              <Select
+                value={selectedBlockId}
+                onValueChange={setSelectedBlockId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a block" />
+                </SelectTrigger>
+                <SelectContent>
+                  {blocks.map((block) => (
+                    <SelectItem key={block.block_id} value={block.block_id!}>
+                      {block.block_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Device Type */}
             <div>
               <label className="text-sm font-medium text-center block mb-2">
@@ -338,15 +268,14 @@ export default function Devices() {
                 </TableCell>
                 <TableCell>
                   <span
-                    className={`px-3 py-1 text-xs rounded-full ${
-                      typeof device.status === "string" &&
+                    className={`px-3 py-1 text-xs rounded-full ${typeof device.status === "string" &&
                       device.status.toLowerCase() === "active"
-                        ? "bg-green-100 text-green-600"
-                        : typeof device.status === "string" &&
-                          device.status.toLowerCase() === "pending"
+                      ? "bg-green-100 text-green-600"
+                      : typeof device.status === "string" &&
+                        device.status.toLowerCase() === "pending"
                         ? "bg-yellow-100 text-yellow-600"
                         : "bg-gray-100 text-gray-600"
-                    }`}
+                      }`}
                   >
                     {typeof device.status === "string"
                       ? device.status
@@ -359,10 +288,10 @@ export default function Devices() {
                       variant="ghost"
                       size="icon"
                       className="hover:shadow-soft-sm transition-smooth"
-                      onClick={() =>{
-                          setSelectedDevice(device); // or set a device to edit
-              setModalMode("update"); // choose "qr" | "update" | "remove"
-              setQrRegisterOpen(true);
+                      onClick={() => {
+                        setSelectedDevice(device);
+                        setModalMode("update");
+                        setQrRegisterOpen(true);
                       }}
                     >
                       <Edit className="h-4 w-4" />
@@ -371,11 +300,10 @@ export default function Devices() {
                       variant="ghost"
                       size="icon"
                       className="hover:bg-[#C00000] hover:text-white transition-smooth"
-                      onClick={() =>
-                      {
-                          setSelectedDevice(device); // or set a device to edit
-              setModalMode("remove"); // choose "qr" | "update" | "remove"
-              setQrRegisterOpen(true);
+                      onClick={() => {
+                        setSelectedDevice(device);
+                        setModalMode("remove");
+                        setQrRegisterOpen(true);
                       }
                       }
                     >
@@ -388,13 +316,6 @@ export default function Devices() {
           </TableBody>
         </Table>
       </div>
-
-      <QrRegisterModal
-        qrRegisterOpen={qrRegisterOpen}
-        setQrRegisterOpen={setQrRegisterOpen}
-        modalMode={modalMode}
-        device={selectedDevice}
-      />
     </div>
   );
 }
