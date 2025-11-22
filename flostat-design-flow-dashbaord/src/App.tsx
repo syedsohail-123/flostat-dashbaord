@@ -34,6 +34,8 @@ import {
 import { Provider } from "react-redux";
 import { store } from "./store.ts";
 import FlostatDashboard from "./pages/FlostatDashboard.tsx";
+import PrivateRoute from "./components/auth/ProtectedRoute.tsx";
+import CompleteProfile from "./pages/CompleteProfile.tsx";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,7 @@ function AppShell() {
     "/signin",
     "/signup",
     "/organizations",
+    "/complete-profile"
   ] as const;
   const isShellless = shelllessRoutes.some((p) => p === location.pathname);
   useEffect(() => {
@@ -56,15 +59,16 @@ function AppShell() {
       stopWebSocket();
     };
   }, []);
+  console.log("IS auth: ",isAuthenticated)
   // Redirect authenticated users from root path to dashboard, but allow access to signin/signup
-  if (isAuthenticated && location.pathname === "/") {
+  if (isAuthenticated &&  location.pathname === "/") {
     return <Navigate to="/organizations" replace />;
   }
 
   // Redirect unauthenticated users from protected pages to signup
-  if (!isAuthenticated && !shelllessRoutes.includes(location.pathname as any)) {
-    return <Navigate to="/" replace />;
-  }
+  // if (!isAuthenticated && !shelllessRoutes.includes(location.pathname as any)) {
+  //   return <Navigate to="/" replace />;
+  // }
  
 
   if (isShellless) {
@@ -75,7 +79,12 @@ function AppShell() {
             <Route path="/" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/organizations" element={<Organizations />} />
+            <Route path="/complete-profile" element={<CompleteProfile/>}/>
+            <Route path="/organizations" element={
+              <PrivateRoute>
+                <Organizations />
+              </PrivateRoute>
+            } />
           </Routes>
         </main>
       </div>
@@ -94,7 +103,13 @@ function AppShell() {
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
               <Route path="org/:org_id">
-                  <Route index element={<FlostatDashboard  components={components}/>}/>
+                  
+                  <Route index element={
+                    <PrivateRoute>
+                      <FlostatDashboard  components={components}/>
+                    </PrivateRoute>
+                    
+                    }/>
               </Route>
              
               <Route path="*" element={<NotFound />} />

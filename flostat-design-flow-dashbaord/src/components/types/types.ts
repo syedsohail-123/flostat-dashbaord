@@ -53,3 +53,23 @@ export interface ThresholdPayload {
   min_threshold?: number;
   max_threshold?: number;
 }
+
+
+
+
+export interface GoogleOuthResponse {
+  user?: any;
+  navigateTo: string;
+  message: string;
+  success: boolean;
+  token?: string;
+  state: string;
+}
+
+export interface SignUpPayload {
+  email: string;
+  password: string;
+ firstName:string;
+  lastName: string;
+  conformPassword: string;
+}
