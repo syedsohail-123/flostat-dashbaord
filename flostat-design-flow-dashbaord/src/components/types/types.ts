@@ -29,6 +29,7 @@ export interface Device {
   device_type?: string;
   org_id?: string;
   status?: any;
+  hardware_status?: string;
   current_level?: number;
   min_threshold?: number;
   max_threshold?: number;

@@ -2,19 +2,12 @@
 import toast from "react-hot-toast";
 import { deviceEndpoints } from "../endPoints";
 import { apiClient } from "../httpClient";
+import { Device } from "@/components/types/types";
 
 const { GET_DEVICE_WITH_STATUS, UPDATE_DEVICE_STATUS } = deviceEndpoints;
 
 // ------------------ TYPES ------------------
-export interface Device {
-  id: string;
-  org_id: string;
-  name: string;
-  status: string;
-  type?: string;
-  last_updated?: string;
-  [key: string]: any;
-}
+
 
 export interface UpdateDeviceStatusPayload {
   device_id: string;

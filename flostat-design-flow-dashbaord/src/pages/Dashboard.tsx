@@ -1,9 +1,29 @@
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
-import { DeviceCard } from "@/components/DeviceCard";
+import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/store";
+import {
+  setBlocks,
+  setCurrentBlock,
+  setBlockMode,
+} from "@/slice/orgSlice";
+import { setDevices, setDevicesObject } from "@/slice/deviceSlice";
+import { toast } from "sonner";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BlockSelector } from "@/components/BlockSelector";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+import { getBlockMode, getBlocksOfOrgId } from "@/lib/operations/blockApis";
+import { getDeviceWithStatus, updateDeviceStatus } from "@/lib/operations/dashboardApis";
+import { Device } from "@/components/types/types";
+import { DEVICE_TYPE, MODE, VALVE_STATUS } from "@/utils/constants";
+
+
+
+import { cn } from "@/lib/utils";
+
 import { Activity, AlertTriangle, CheckCircle, XCircle, X, MoreVertical, Power, Settings, Plus } from "lucide-react";
 import {
   Table,
@@ -27,182 +47,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+
 import { Toggle } from "@/components/ui/toggle";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
-import { getOrgTopics } from "@/lib/operations/orgApis";
-import { toast } from "sonner";
-import { useDispatch } from "react-redux";
-import { setTopics } from "@/slice/webSocketSlice";
-
-// Add state to store devices
-const initialDevices = [
-  {
-    id: "pump-001",
-    name: "Primary Pump A1",
-    type: "pump" as const,
-    status: "active" as const,
-    value: 3250,
-    unit: "RPM",
-    threshold: { min: 2000, max: 4000 },
-    location: "Building A - Floor 1",
-    block: "Block A",
-    uptime: "99.8%",
-    lastSync: "2 min ago",
-  },
-  {
-    id: "valve-001",
-    name: "Main Control Valve",
-    type: "valve" as const,
-    status: "active" as const,
-    value: 75,
-    unit: "%",
-    threshold: { min: 0, max: 100 },
-    location: "Building A - Floor 2",
-    block: "Block A",
-    uptime: "98.5%",
-    lastSync: "1 min ago",
-  },
-  {
-    id: "tank-001",
-    name: "Storage Tank T1",
-    type: "tank" as const,
-    status: "warning" as const,
-    value: 8500,
-    unit: "L",
-    threshold: { min: 5000, max: 10000 },
-    location: "Building B - Ground",
-    block: "Block B",
-    uptime: "97.2%",
-    lastSync: "5 min ago",
-  },
-  {
-    id: "pump-002",
-    name: "Secondary Pump B2",
-    type: "pump" as const,
-    status: "inactive" as const,
-    value: 0,
-    unit: "RPM",
-    threshold: { min: 2000, max: 4000 },
-    location: "Building B - Floor 1",
-    block: "Block B",
-    uptime: "0%",
-    lastSync: "30 min ago",
-  },
-  {
-    id: "tank-003",
-    name: "Tank",
-    type: "tank" as const,
-    status: "active" as const,
-    value: 7600,
-    unit: "L",
-    threshold: { min: 5000, max: 10000 },
-    location: "Building A - Floor 3",
-    block: "Block A",
-    uptime: "99.9%",
-    lastSync: "1 min ago",
-  },
-  {
-    id: "valve-002",
-    name: "Backup Valve",
-    type: "valve" as const,
-    status: "active" as const,
-    value: 100,
-    unit: "%",
-    threshold: { min: 0, max: 100 },
-    location: "Building C - Floor 1",
-    block: "Block C",
-    uptime: "96.7%",
-    lastSync: "3 min ago",
-  },
-  {
-    id: "pump-003",
-    name: "Auxiliary Pump",
-    type: "pump" as const,
-    status: "warning" as const,
-    value: 1800,
-    unit: "RPM",
-    threshold: { min: 2000, max: 4000 },
-    location: "Building A - Floor 2",
-    block: "Block A",
-    uptime: "92.4%",
-    lastSync: "Just now",
-  },
-  {
-    id: "tank-staff",
-    name: "Staff Quarters Tank",
-    type: "tank" as const,
-    status: "warning" as const,
-    value: 4200,
-    unit: "L",
-    threshold: { min: 5000, max: 10000 },
-    location: "Building A - Floor 1",
-    block: "Block A",
-    uptime: "95.1%",
-    lastSync: "1 min ago",
-  },
-  {
-    id: "tank-ahub",
-    name: "AHub Tank",
-    type: "tank" as const,
-    status: "active" as const,
-    value: 9100,
-    unit: "L",
-    threshold: { min: 5000, max: 10000 },
-    location: "Building D - Floor 1",
-    block: "Block D",
-    uptime: "98.9%",
-    lastSync: "4 min ago",
-  },
-  {
-    id: "pump-ahub",
-    name: "AHub Pump",
-    type: "pump" as const,
-    status: "active" as const,
-    value: 3800,
-    unit: "RPM",
-    threshold: { min: 2000, max: 4000 },
-    location: "Building D - Floor 1",
-    block: "Block D",
-    uptime: "99.2%",
-    lastSync: "3 min ago",
-  },
-  {
-    id: "sump-001",
-    name: "Main Sump",
-    type: "sump" as const,
-    status: "active" as const,
-    value: 30,
-    unit: "cm",
-    threshold: { min: 0, max: 100 },
-    location: "Building A - Basement",
-    block: "Block A",
-    uptime: "100%",
-    lastSync: "Just now",
-  },
-];
+import { DeviceCard } from "@/components/DeviceCard";
 
 // Stats data
 const stats = [
   { label: "Total Devices", value: "11", icon: Activity, color: "text-blue-500" },
   { label: "Active", value: "8", icon: CheckCircle, color: "text-green-500" },
   { label: "Warnings", value: "2", icon: AlertTriangle, color: "text-yellow-500" },
-  { label: "Errors", value: "1", icon: XCircle, color: "text-red-500" },
+  { label: "Disconnected", value: "1", icon: XCircle, color: "text-red-500" },
 ];
-
 export default function Dashboard() {
-  const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
+  const dispatch = useDispatch();
+  const { blocks, currentBlock, blockModes } = useSelector((state: RootState) => state.org);
+  const { devices } = useSelector((state: RootState) => state.device);
+  const token = useSelector((state: RootState) => state.auth.token);
+   const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
+
   const [multiTypes, setMultiTypes] = useState<string[]>([]);
-  const [devices, setDevices] = useState<any[]>(initialDevices);
   const [minThreshold, setMinThreshold] = useState("");
   const [maxThreshold, setMaxThreshold] = useState("");
   // Filters
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [search, setSearch] = useState<string>("");
   const [controls, setControls] = useState({
     pump2: true,
     pump1: false,
@@ -211,54 +80,62 @@ export default function Dashboard() {
     valve1: true,
     valve4: true,
   });
+  const org_id = useSelector((state: RootState) => state.org.org_id);
 
-  // Tank levels (%, 0-100)
-  const [tank4Level, setTank4Level] = useState<number>(1);
-  const [tankStaffLevel, setTankStaffLevel] = useState<number>(4);
-  const [tankAHubLevel, setTankAHubLevel] = useState<number>(23);
-  const dispatch = useDispatch();
-  const org_id = useSelector((state: RootState)=> state.org.org_id);
-  const token = useSelector((state: RootState)=> state.auth.token);
-  console.log("Token :",token)
+  const [search, setSearch] = useState("");
 
-  // Load devices from localStorage when component mounts
+  // Fetch blocks on mount
   useEffect(() => {
-    const loadDevicesFromStorage = () => {
-      const storedDevices = localStorage.getItem('dashboardDevices');
-      if (storedDevices) {
-        try {
-          const parsedDevices = JSON.parse(storedDevices);
-          setDevices([...initialDevices, ...parsedDevices]);
-        } catch (e) {
-          console.error('Failed to parse devices from localStorage', e);
-          setDevices(initialDevices);
+    const fetchBlocks = async () => {
+      try {
+        const result = await getBlocksOfOrgId(org_id,token);
+        if (result) {
+          dispatch(setBlocks(result));
         }
-      } else {
-        setDevices(initialDevices);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to fetch blocks");
+      }
+    };
+    if (org_id) fetchBlocks();
+  }, [org_id]);
+
+  // Fetch devices and block modes
+  useEffect(() => {
+    const fetchDevicesAndModes = async () => {
+      try {
+        // Fetch devices
+        const deviceRes = await getDeviceWithStatus(org_id, token);
+        if (deviceRes) {
+          dispatch(setDevices(deviceRes));
+          dispatch(setDevicesObject(deviceRes));
+        }
+
+        // Fetch current block mode if block selected
+        if (currentBlock && !blockModes[currentBlock.block_id]) {
+          const result = await getBlockMode({ org_id, block_id: currentBlock.block_id }, token);
+          if (result) {
+            dispatch(setBlockMode(result));
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to fetch devices or block modes");
       }
     };
 
-    loadDevicesFromStorage();
+    if (org_id) fetchDevicesAndModes();
+  }, [org_id, currentBlock]);
 
-    // Listen for updates to dashboard devices
-    const handleDevicesUpdate = () => {
-      loadDevicesFromStorage();
-    };
-
-    window.addEventListener('devicesUpdated', handleDevicesUpdate);
-    
-    // Cleanup listener
-    return () => {
-      window.removeEventListener('devicesUpdated', handleDevicesUpdate);
-    };
-  }, []);
-
-  const clampPercent = (val: number) => Math.max(0, Math.min(100, Math.round(val)));
-
-  const filteredDevices = devices
-    .filter((device) => (selectedBlocks.length === 0 ? true : selectedBlocks.includes(device.block)))
-    .filter((device) => (multiTypes.length === 0 ? true : multiTypes.includes(device.type)));
-
+   const showFilterChip = selectedBlocks.length > 0;
+  // Group devices by type inside current block
+  const filteredDevices: Device[] = devices.filter((d) => {
+    if (!currentBlock) return true;
+    if (Array.isArray(d.block_id)) return d.block_id.includes(currentBlock.block_id);
+    return d.block_id === currentBlock.block_id;
+  }).filter((d) =>
+    !search || d.device_name.toLowerCase().includes(search.toLowerCase())
+  );
   const filteredStats =
     selectedBlocks.length === 0
       ? stats
@@ -278,39 +155,66 @@ export default function Dashboard() {
           },
         ];
 
-  const handleSaveThresholds = () => {
-    console.log("Saving thresholds:", { min: minThreshold, max: maxThreshold });
-  };
-
-  const showFilterChip = selectedBlocks.length > 0;
-  
   // Apply common filters once, then render by device type group order
   const visibleDevices = filteredDevices
     .filter((d) => typeFilter === "all" || d.type === typeFilter)
     .filter((d) => statusFilter === "all" || d.status === statusFilter)
     .filter((d) => !search || d.name.toLowerCase().includes(search.toLowerCase()));
 
-  const pumpDevices = visibleDevices.filter((d) => d.type === "pump");
-  const valveDevices = visibleDevices.filter((d) => d.type === "valve");
-  const tankDevices = visibleDevices.filter((d) => d.type === "tank");
-  const sumpDevices = visibleDevices.filter((d) => d.type === "sump");
+  const pumpDevices = visibleDevices.filter((d) => d.device_type === DEVICE_TYPE.PUMP);
+  const valveDevices = visibleDevices.filter((d) => d.device_type === DEVICE_TYPE.VALVE);
+  const tankDevices = visibleDevices.filter((d) => d.device_type === DEVICE_TYPE.TANK);
+  const sumpDevices = visibleDevices.filter((d) => d.device_type === DEVICE_TYPE.SUMP);
 
-  // Function to add a new device to the dashboard
-  const addDeviceToDashboard = (newDevice: any) => {
-    const storedDevices = localStorage.getItem('dashboardDevices');
-    const existingDevices = storedDevices ? JSON.parse(storedDevices) : [];
-    
-    const updatedDevices = [...existingDevices, newDevice];
-    
-    localStorage.setItem('dashboardDevices', JSON.stringify(updatedDevices));
-    
-    // Dispatch event to notify the dashboard to refresh devices
-    const event = new CustomEvent('devicesUpdated');
-    window.dispatchEvent(event);
+  // const pumpDevices = filteredDevices.filter((d) => d.device_type === DEVICE_TYPE.PUMP);
+  // const valveDevices = filteredDevices.filter((d) => d.device_type === DEVICE_TYPE.VALVE);
+  // const tankDevices = filteredDevices.filter((d) => d.device_type === DEVICE_TYPE.TANK);
+  // const sumpDevices = filteredDevices.filter((d) => d.device_type === DEVICE_TYPE.SUMP);
+
+  // Toggle device status (Pump/Valve/Level)
+  const handleDeviceUpdate = async (device: Device, level?: number) => {
+    if (!device.device_type || !device.device_id || !device.org_id) {
+      toast.error("Missing device params");
+      return;
+    }
+
+    const data: any = {
+      device_id: device.device_id,
+      device_type: device.device_type,
+      org_id: device.org_id,
+    };
+
+    let newStatus: any = null;
+
+    if (device.device_type === DEVICE_TYPE.PUMP) {
+      newStatus = device.status === "ON" ? "OFF" : "ON";
+      data.status = newStatus;
+    } else if (device.device_type === DEVICE_TYPE.VALVE) {
+      newStatus = device.status === VALVE_STATUS.OPEN ? VALVE_STATUS.CLOSE : VALVE_STATUS.OPEN;
+      data.status = newStatus;
+    } else if (device.device_type === DEVICE_TYPE.TANK || device.device_type === DEVICE_TYPE.SUMP) {
+      if (level === undefined || level < 0 || level > 100) {
+        toast.error("Level required (0-100)");
+        return;
+      }
+      data.current_level = level;
+      data.block_id = device.block_id ? device.block_id : "none";
+    }
+
+    try {
+      const res = await updateDeviceStatus(data, token);
+      if (res) {
+        toast.success("Device updated successfully");
+        // You may optionally refresh devices or rely on WebSocket/MQTT updates
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update device");
+    }
   };
 
   return (
-    <div className="space-y-6">
+        <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -346,6 +250,7 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <BlockSelector
+            availableBlocks={blocks}
               selectedBlocks={selectedBlocks}
               onBlocksChange={setSelectedBlocks}
             />
@@ -402,8 +307,8 @@ export default function Dashboard() {
               <Badge variant="secondary">{pumpDevices.length}</Badge>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {pumpDevices.map((device) => (
-                <DeviceCard key={device.id} {...device} />
+              {pumpDevices.map((device,i) => (
+                <DeviceCard  key={i} device={device} />
               ))}
             </div>
           </div>
@@ -417,7 +322,7 @@ export default function Dashboard() {
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {valveDevices.map((device) => (
-                <DeviceCard key={device.id} {...device} />
+                <DeviceCard key={device.device_id} device={device} />
               ))}
             </div>
           </div>
@@ -431,7 +336,7 @@ export default function Dashboard() {
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {tankDevices.map((device) => (
-                <DeviceCard key={device.id} {...device} />
+                 <DeviceCard key={device.device_id} device={device} />
               ))}
             </div>
           </div>
@@ -445,7 +350,7 @@ export default function Dashboard() {
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {sumpDevices.map((device) => (
-                <DeviceCard key={device.id} {...device} />
+                 <DeviceCard key={device.device_id} device={device} />
               ))}
             </div>
           </div>
@@ -522,5 +427,124 @@ export default function Dashboard() {
         </CardContent>
       </Card>
     </div>
+
   );
 }
+
+
+// <div className="space-y-6 p-6">
+//       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+//         <div>
+//           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+//           <p className="text-muted-foreground mt-1">Monitor and control your industrial systems</p>
+//         </div>
+//         <div className="flex items-center gap-2">
+//           <Button variant="outline" size="sm">Configure</Button>
+//           <Button size="sm">Export Report</Button>
+//         </div>
+//       </div>
+
+//       {/* Block Selector */}
+//       <div className="flex flex-wrap items-center gap-4">
+//         <BlockSelector
+//           selectedBlocks={currentBlock ? [currentBlock.block_id] : []}
+//           onBlocksChange={(ids) => {
+//             const block = blocks.find((b) => b.block_id === ids[0]);
+//             dispatch(setCurrentBlock(block || null));
+//           }}
+//         />
+//         <Input
+//           placeholder="Search devices..."
+//           value={search}
+//           onChange={(e) => setSearch(e.target.value)}
+//           className="w-48"
+//         />
+//       </div>
+
+//       {/* Devices */}
+//       <div className="space-y-8">
+//         {pumpDevices.length > 0 && (
+//           <div className="space-y-4">
+//             <div className="flex items-center justify-between">
+//               <h2 className="text-xl font-semibold">Pumps</h2>
+//               <Badge variant="secondary">{pumpDevices.length}</Badge>
+//             </div>
+//             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+//               {pumpDevices.map((device) => (
+//                 <DeviceCard
+//                   key={device.device_id}
+//                   {...device}
+//                   handleUpdate={(status?: any) => handleDeviceUpdate(device, status)}
+//                   disabled={currentBlock ? blockModes[currentBlock.block_id] === MODE.AUTO : false}
+//                 />
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {valveDevices.length > 0 && (
+//           <div className="space-y-4">
+//             <div className="flex items-center justify-between">
+//               <h2 className="text-xl font-semibold">Valves</h2>
+//               <Badge variant="secondary">{valveDevices.length}</Badge>
+//             </div>
+//             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+//               {valveDevices.map((device) => (
+//                 <DeviceCard
+//                   key={device.device_id}
+//                   {...device}
+//                   handleUpdate={(status?: any) => handleDeviceUpdate(device, status)}
+//                   disabled={currentBlock ? blockModes[currentBlock.block_id] === MODE.AUTO : false}
+//                 />
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {tankDevices.length > 0 && (
+//           <div className="space-y-4">
+//             <div className="flex items-center justify-between">
+//               <h2 className="text-xl font-semibold">Tanks</h2>
+//               <Badge variant="secondary">{tankDevices.length}</Badge>
+//             </div>
+//             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+//               {tankDevices.map((device) => (
+//                 <DeviceCard
+//                   key={device.device_id}
+//                   {...device}
+//                   type="tank"
+//                   handleUpdate={(level?: number) => handleDeviceUpdate(device, level)}
+//                   disabled={currentBlock ? blockModes[currentBlock.block_id] === MODE.AUTO : false}
+//                 />
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {sumpDevices.length > 0 && (
+//           <div className="space-y-4">
+//             <div className="flex items-center justify-between">
+//               <h2 className="text-xl font-semibold">Sumps</h2>
+//               <Badge variant="secondary">{sumpDevices.length}</Badge>
+//             </div>
+//             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+//               {sumpDevices.map((device) => (
+//                 <DeviceCard
+//                   key={device.device_id}
+//                   {...device}
+//                   type="sump"
+//                   handleUpdate={(level?: number) => handleDeviceUpdate(device, level)}
+//                   disabled={currentBlock ? blockModes[currentBlock.block_id] === MODE.AUTO : false}
+//                 />
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {filteredDevices.length === 0 && (
+//           <div className="flex flex-col items-center justify-center py-12 text-center">
+//             <p className="mt-4 text-lg font-semibold text-muted-foreground">No devices found</p>
+//           </div>
+//         )}
+//       </div>
+//     </div>
