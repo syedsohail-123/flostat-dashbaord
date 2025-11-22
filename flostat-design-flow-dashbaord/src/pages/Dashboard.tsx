@@ -5,6 +5,9 @@ import {
   setBlocks,
   setCurrentBlock,
   setBlockMode,
+  setOrgId,
+  setBlocksName,
+  setLogs,
 } from "@/slice/orgSlice";
 import { setDevices, setDevicesObject } from "@/slice/deviceSlice";
 import { toast } from "sonner";
@@ -16,15 +19,26 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 import { getBlockMode, getBlocksOfOrgId } from "@/lib/operations/blockApis";
-import { getDeviceWithStatus, updateDeviceStatus } from "@/lib/operations/dashboardApis";
+import {
+  getDeviceWithStatus,
+  updateDeviceStatus,
+} from "@/lib/operations/dashboardApis";
 import { Device } from "@/components/types/types";
 import { DEVICE_TYPE, MODE, VALVE_STATUS } from "@/utils/constants";
 
-
-
 import { cn } from "@/lib/utils";
 
-import { Activity, AlertTriangle, CheckCircle, XCircle, X, MoreVertical, Power, Settings, Plus } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  X,
+  MoreVertical,
+  Power,
+  Settings,
+  Plus,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -51,20 +65,34 @@ import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { Toggle } from "@/components/ui/toggle";
 import { Switch } from "@/components/ui/switch";
 import { DeviceCard } from "@/components/DeviceCard";
+import { useLocation } from "react-router-dom";
+import { logsOrgTopics } from "@/lib/operations/orgApis";
 
 // Stats data
 const stats = [
-  { label: "Total Devices", value: "11", icon: Activity, color: "text-blue-500" },
+  {
+    label: "Total Devices",
+    value: "11",
+    icon: Activity,
+    color: "text-blue-500",
+  },
   { label: "Active", value: "8", icon: CheckCircle, color: "text-green-500" },
-  { label: "Warnings", value: "2", icon: AlertTriangle, color: "text-yellow-500" },
+  {
+    label: "Warnings",
+    value: "2",
+    icon: AlertTriangle,
+    color: "text-yellow-500",
+  },
   { label: "Disconnected", value: "1", icon: XCircle, color: "text-red-500" },
 ];
 export default function Dashboard() {
   const dispatch = useDispatch();
-  const { blocks, currentBlock, blockModes } = useSelector((state: RootState) => state.org);
-  const { devices } = useSelector((state: RootState) => state.device);
+  const { blocks, currentBlock, blockModes } = useSelector(
+    (state: RootState) => state.org
+  );
+  const { devices,devicesObject } = useSelector((state: RootState) => state.device);
   const token = useSelector((state: RootState) => state.auth.token);
-   const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
+  const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
 
   const [multiTypes, setMultiTypes] = useState<string[]>([]);
   const [minThreshold, setMinThreshold] = useState("");
@@ -80,23 +108,30 @@ export default function Dashboard() {
     valve1: true,
     valve4: true,
   });
-  const org_id = useSelector((state: RootState) => state.org.org_id);
-
+  const { org_id, logs } = useSelector((state: RootState) => state.org);
+  const location = useLocation();
+  // console.log("ORG LOG: ",)
+  console.log("Org id: ", org_id);
   const [search, setSearch] = useState("");
 
   // Fetch blocks on mount
   useEffect(() => {
     const fetchBlocks = async () => {
       try {
-        const result = await getBlocksOfOrgId(org_id,token);
+        const result = await getBlocksOfOrgId(org_id, token);
         if (result) {
           dispatch(setBlocks(result));
+          dispatch(setBlocksName(result));
         }
       } catch (err) {
         console.error(err);
         toast.error("Failed to fetch blocks");
       }
     };
+    if (!org_id) {
+      const orgId = location.pathname.split("/")[2];
+      dispatch(setOrgId(orgId));
+    }
     if (org_id) fetchBlocks();
   }, [org_id]);
 
@@ -113,7 +148,10 @@ export default function Dashboard() {
 
         // Fetch current block mode if block selected
         if (currentBlock && !blockModes[currentBlock.block_id]) {
-          const result = await getBlockMode({ org_id, block_id: currentBlock.block_id }, token);
+          const result = await getBlockMode(
+            { org_id, block_id: currentBlock.block_id },
+            token
+          );
           if (result) {
             dispatch(setBlockMode(result));
           }
@@ -127,44 +165,86 @@ export default function Dashboard() {
     if (org_id) fetchDevicesAndModes();
   }, [org_id, currentBlock]);
 
-   const showFilterChip = selectedBlocks.length > 0;
-  // Group devices by type inside current block
-  const filteredDevices: Device[] = devices.filter((d) => {
-    if (!currentBlock) return true;
-    if (Array.isArray(d.block_id)) return d.block_id.includes(currentBlock.block_id);
-    return d.block_id === currentBlock.block_id;
-  }).filter((d) =>
-    !search || d.device_name.toLowerCase().includes(search.toLowerCase())
-  );
-  const filteredStats =
-    selectedBlocks.length === 0
-      ? stats
-      : [
-          { ...stats[0], value: filteredDevices.length.toString() },
-          {
-            ...stats[1],
-            value: filteredDevices.filter((d) => d.status === "active").length.toString(),
-          },
-          {
-            ...stats[2],
-            value: filteredDevices.filter((d) => d.status === "warning").length.toString(),
-          },
-          {
-            ...stats[3],
-            value: filteredDevices.filter((d) => d.status === "inactive" || d.status === "error").length.toString(),
-          },
-        ];
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
+  const fetchLogs = async () => {
+    try {
+      const data = {
+        org_id,
+      };
+      const result = await logsOrgTopics(data, token);
+
+      console.log("Result log: ", logs, result);
+      if (result) {
+        dispatch(setLogs(result));
+      }
+    } catch (error) {
+      toast.error("Failed to fetch logs");
+      console.error("Fetch logs error:", error);
+    }
+  };
+
+  const showFilterChip = selectedBlocks.length > 0;
+  // Group devices by type inside current block
+  const filteredDevices: Device[] = devices
+    .filter((d) => {
+      if (!currentBlock) return true;
+      if (Array.isArray(d.block_id))
+        return d.block_id.includes(currentBlock.block_id);
+      return d.block_id === currentBlock.block_id;
+    })
+    .filter(
+      (d) =>
+        !search || d.device_name.toLowerCase().includes(search.toLowerCase())
+    );
+  console.log("Filter the devices: ", filteredDevices);
+  const filteredStats = [
+    { ...stats[0], value: filteredDevices.length.toString() },
+    {
+      ...stats[1],
+      value: filteredDevices
+        .filter((d) => d.hardware_status && d.hardware_status === "connected")
+        .length.toString(),
+    },
+    {
+      ...stats[2],
+      value: filteredDevices
+        .filter((d) => d.status === "warning")
+        .length.toString(),
+    },
+    {
+      ...stats[3],
+      value: filteredDevices
+        .filter(
+          (d) =>
+            d.hardware_status === null || d.hardware_status === "disconnected"
+        )
+        .length.toString(),
+    },
+  ];
+  console.log("Filter states: ", filteredStats);
   // Apply common filters once, then render by device type group order
   const visibleDevices = filteredDevices
     .filter((d) => typeFilter === "all" || d.type === typeFilter)
     .filter((d) => statusFilter === "all" || d.status === statusFilter)
-    .filter((d) => !search || d.name.toLowerCase().includes(search.toLowerCase()));
+    .filter(
+      (d) => !search || d.name.toLowerCase().includes(search.toLowerCase())
+    );
 
-  const pumpDevices = visibleDevices.filter((d) => d.device_type === DEVICE_TYPE.PUMP);
-  const valveDevices = visibleDevices.filter((d) => d.device_type === DEVICE_TYPE.VALVE);
-  const tankDevices = visibleDevices.filter((d) => d.device_type === DEVICE_TYPE.TANK);
-  const sumpDevices = visibleDevices.filter((d) => d.device_type === DEVICE_TYPE.SUMP);
+  const pumpDevices = visibleDevices.filter(
+    (d) => d.device_type === DEVICE_TYPE.PUMP
+  );
+  const valveDevices = visibleDevices.filter(
+    (d) => d.device_type === DEVICE_TYPE.VALVE
+  );
+  const tankDevices = visibleDevices.filter(
+    (d) => d.device_type === DEVICE_TYPE.TANK
+  );
+  const sumpDevices = visibleDevices.filter(
+    (d) => d.device_type === DEVICE_TYPE.SUMP
+  );
 
   // const pumpDevices = filteredDevices.filter((d) => d.device_type === DEVICE_TYPE.PUMP);
   // const valveDevices = filteredDevices.filter((d) => d.device_type === DEVICE_TYPE.VALVE);
@@ -190,9 +270,15 @@ export default function Dashboard() {
       newStatus = device.status === "ON" ? "OFF" : "ON";
       data.status = newStatus;
     } else if (device.device_type === DEVICE_TYPE.VALVE) {
-      newStatus = device.status === VALVE_STATUS.OPEN ? VALVE_STATUS.CLOSE : VALVE_STATUS.OPEN;
+      newStatus =
+        device.status === VALVE_STATUS.OPEN
+          ? VALVE_STATUS.CLOSE
+          : VALVE_STATUS.OPEN;
       data.status = newStatus;
-    } else if (device.device_type === DEVICE_TYPE.TANK || device.device_type === DEVICE_TYPE.SUMP) {
+    } else if (
+      device.device_type === DEVICE_TYPE.TANK ||
+      device.device_type === DEVICE_TYPE.SUMP
+    ) {
       if (level === undefined || level < 0 || level > 100) {
         toast.error("Level required (0-100)");
         return;
@@ -214,11 +300,13 @@ export default function Dashboard() {
   };
 
   return (
-        <div className="space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Monitor and control your industrial systems</p>
+          <p className="text-muted-foreground mt-1">
+            Monitor and control your industrial systems
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
@@ -235,7 +323,9 @@ export default function Dashboard() {
           return (
             <Card key={stat.label} className="shadow-elevation-2">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {stat.label}
+                </CardTitle>
                 <Icon className={cn("h-4 w-4", stat.color)} />
               </CardHeader>
               <CardContent>
@@ -250,7 +340,7 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <BlockSelector
-            availableBlocks={blocks}
+              availableBlocks={blocks}
               selectedBlocks={selectedBlocks}
               onBlocksChange={setSelectedBlocks}
             />
@@ -307,8 +397,8 @@ export default function Dashboard() {
               <Badge variant="secondary">{pumpDevices.length}</Badge>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {pumpDevices.map((device,i) => (
-                <DeviceCard  key={i} device={device} />
+              {pumpDevices.map((device, i) => (
+                <DeviceCard key={i} device={device} />
               ))}
             </div>
           </div>
@@ -336,7 +426,7 @@ export default function Dashboard() {
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {tankDevices.map((device) => (
-                 <DeviceCard key={device.device_id} device={device} />
+                <DeviceCard key={device.device_id} device={device} />
               ))}
             </div>
           </div>
@@ -350,7 +440,7 @@ export default function Dashboard() {
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {sumpDevices.map((device) => (
-                 <DeviceCard key={device.device_id} device={device} />
+                <DeviceCard key={device.device_id} device={device} />
               ))}
             </div>
           </div>
@@ -383,54 +473,75 @@ export default function Dashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell>
-                  <div className="font-medium">Pump A1</div>
-                  <div className="text-sm text-muted-foreground">DEV-001</div>
-                </TableCell>
-                <TableCell>Started</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                    Success
-                  </Badge>
-                </TableCell>
-                <TableCell>2 min ago</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <div className="font-medium">Tank T2</div>
-                  <div className="text-sm text-muted-foreground">DEV-002</div>
-                </TableCell>
-                <TableCell>Level Alert</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
-                    Warning
-                  </Badge>
-                </TableCell>
-                <TableCell>5 min ago</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <div className="font-medium">Valve V3</div>
-                  <div className="text-sm text-muted-foreground">DEV-003</div>
-                </TableCell>
-                <TableCell>Opened</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                    Success
-                  </Badge>
-                </TableCell>
-                <TableCell>10 min ago</TableCell>
-              </TableRow>
+              {logs.length > 0 ? (
+                logs.map((log) => {
+                  const action =
+                    log.device_type === "pump"
+                      ? `Pump turned ${log.status}`
+                      : log.device_type === "valve"
+                      ? `Valve ${log.status}`
+                      : `Level updated to ${log.current_level}%`;
+
+                  const statusBadge =
+                    log.device_type === "pump" || log.device_type === "valve"
+                      ? log.status === "ON" || log.status === "OPEN"
+                        ? "Success"
+                        : "Inactive"
+                      : "Info";
+
+                  return (
+                    <TableRow key={log.uuid}>
+                      <TableCell>
+                        <div className="font-medium capitalize">
+                          {devicesObject[log.device_id]}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {log.device_type}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="capitalize">{action}</TableCell>
+
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            statusBadge === "Success"
+                              ? "bg-green-100 text-green-600 border-green-300"
+                              : statusBadge === "Inactive"
+                              ? "bg-red-100 text-red-600 border-red-300"
+                              : "bg-blue-100 text-blue-600 border-blue-300"
+                          }
+                        >
+                          { (log.device_type === "tank" || log.device_type === "sump" )? log?.current_level:log?.status}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell>
+                        {new Date(
+                          log.last_updated || log.updated_at
+                        ).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-4 text-muted-foreground"
+                  >
+                    No recent activity found
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
     </div>
-
   );
 }
-
 
 // <div className="space-y-6 p-6">
 //       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

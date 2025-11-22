@@ -1,119 +1,136 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge } from "@/components/StatusBadge";
-import { Badge } from "@/components/ui/badge";
-import { Droplets, Gauge, ThermometerSun } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Device } from "./types/types";
+import {
+  Battery,
+  Droplet,
+  Gauge,
+  ThermometerSun,
+  Waves,
+  Wifi,
+} from "lucide-react";
+import { Card, CardContent } from "./ui/card";
+import { StatusBadge } from "./StatusBadge";
+import { StatusDeviceBadge } from "./StatusDeviceBadge";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
-
-const typeIcons = {
-  pump: Droplets,
-  valve: Gauge,
-  tank: ThermometerSun,
-  sump: Droplets,
-} as const;
 interface DeviceCardProps {
-  device: Device;
+  device: any;
 }
-export function DeviceCard({device}:DeviceCardProps) {
-  console.log("Device in card: ",device)
-  const Icon = typeIcons[device.device_type];
-  const initialActive = device?.hardware_status === "connected";
-  const [isOn, setIsOn] = useState<boolean>(initialActive);
-  const derivedStatus: "active" | "inactive" | "warning" | "error" =
-    status === "warning" || status === "error" ? status : isOn ? "active" : "inactive";
-  const isActive = derivedStatus === "active";
-  const nextActionLabel = device.device_type === "valve" ? (isOn ? "Close valve" : "Open valve") : (isOn ? "Turn power off" : "Turn power on");
 
-  // Tank-specific percent conversion and color classification
-  let displayValue = device.status;
-  let displayUnit = "";
-  let tankPercent: number | null = null;
-  let tankLevelCategory: 'low' | 'normal' | 'high' | null = null;
-  // Sump-specific percent conversion and color classification
-  let sumpPercent: number | null = null;
-  let sumpLevelCategory: 'low' | 'normal' | 'high' | null = null;
-  if (device.device_type === 'tank') {
-    // If device?.max_threshold provided treat max as 100%; else assume raw value already percent if <=100
-    const maxCap = device?.max_threshold&& device?.max_threshold > 0 ? device?.max_threshold : 100;
-    tankPercent = Math.min(100, Math.round((device?.status / maxCap) * 100));
-    displayValue = tankPercent;
-    displayUnit = '%';
-    if (tankPercent <= 25) tankLevelCategory = 'low';
-    else if (tankPercent >= 80) tankLevelCategory = 'high';
-    else tankLevelCategory = 'normal';
+export const DeviceCard = ({ device }: DeviceCardProps) => {
+  const { device_name, device_type } = device;
+  console.log("Device in card: ",device)
+  const {blocksName} = useSelector((state: RootState)=> state.org);
+  const isOn = (device_type==="pump" || device_type==="valve") && device?.status?.toLowerCase() === "ON";
+
+  // status correction
+  const derivedStatus: "connected" | "disconnected" =
+    device.hardware_status? device.hardware_status:"disconnected";
+    
+
+  // icons per device
+  const typeIcons = {
+    pump: Droplet,
+    valve: Gauge,
+    tank: ThermometerSun,
+    sump: Waves,
+  } as const;
+  const TypeIcon = typeIcons[device_type as keyof typeof typeIcons] ?? Gauge;
+
+  // values
+  const statusPercentage =
+    typeof device.status_percentage === "number" ? device.status_percentage : null;
+  const wifiStrength =
+    typeof device.wifi_strength === "number" ? device.wifi_strength : null;
+  const batteryPercentage =
+    typeof device.battery_percentage === "number" ? device.battery_percentage : null;
+
+  // tank + sump level category
+  function getLevelCategory(level: number | null) {
+    if (level === null) return null;
+    if (level < 40) return "low";
+    if (level <= 70) return "normal";
+    return "high";
   }
-  if (device.device_type === 'sump') {
-    const maxCap = device?.max_threshold&& device?.max_threshold > 0 ? device?.max_threshold : 100;
-    sumpPercent = Math.min(100, Math.round((device.status / maxCap) * 100));
-    displayValue = sumpPercent;
-    displayUnit = '%';
-    if (sumpPercent <= 25) sumpLevelCategory = 'low';
-    else if (sumpPercent >= 80) sumpLevelCategory = 'high';
-    else sumpLevelCategory = 'normal';
-  }
+
+  const levelCategory =
+    device_type === "tank" || device_type === "sump"
+      ? getLevelCategory(statusPercentage)
+      : null;
 
   return (
-    <Card className="shadow-elevation-2 hover:shadow-elevation-3 transition-shadow">
-      <CardHeader className="pb-2">
+    <Card
+      className="rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+ 
+    >
+      <CardContent className="p-4 space-y-4">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-lg",
-              isActive ? "bg-aqua/10" : "bg-muted"
-            )}>
-              <Icon className={cn(
-                "h-5 w-5",
-                isActive ? "text-aqua" : "text-muted-foreground"
-              )} />
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold">{device.device_name || device.device_id}</CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">{"location"}</p>
-            </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-medium">{device_name}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {blocksName[device.block_id] ?? "No block"}
+            </p>
           </div>
-          <StatusBadge
+          <TypeIcon className="size-5 text-primary" />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <StatusDeviceBadge
             status={derivedStatus}
-            label={device.device_type === 'tank' && tankLevelCategory ? (
-              tankLevelCategory === 'low' ? 'Low' : tankLevelCategory === 'normal' ? 'Normal' : 'High'
-            ) : undefined}
-            className={device.device_type === 'tank' && tankLevelCategory ? (
-              tankLevelCategory === 'low'
-                ? 'bg-[#C00000] text-white'
-                : tankLevelCategory === 'normal'
-                  ? 'bg-[#FFC107] text-white'
-                  : 'bg-[hsl(var(--aqua))] text-white'
-            ) : undefined}
+            label={
+              levelCategory === "low"
+                ? "Low"
+                : levelCategory === "normal"
+                ? "Normal"
+                : levelCategory === "high"
+                ? "High"
+                : undefined
+            }
+            className={
+              levelCategory
+                ? levelCategory === "low"
+                  ? "bg-[#C00000] text-white"
+                  : levelCategory === "normal"
+                  ? "bg-[#FFC107] text-white"
+                  : "bg-[hsl(var(--aqua))] text-white"
+                : undefined
+            }
           />
+
+          {(device_type==="tank" || device_type==="sump") && <div className="">
+            {`${device?.status}%`}
+          </div> }
+          {(device_type==="valve" || device_type==="pump") && <div className="">
+            {`${device?.status}`}
+          </div> }
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-baseline justify-between">
-          {device.device_type !== 'valve' && (
-            <div>
-              <p className="text-sm text-muted-foreground">{displayValue} {displayUnit}</p>
-            </div>
-          )}
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">Last sync</p>
-            <p className="text-xs font-medium">Just now</p>
+
+        {(wifiStrength !== null ||
+          batteryPercentage !== null ||
+          device.hardware_status) && (
+          <div className="grid grid-cols-3 gap-2 text-sm">
+            {device.hardware_status && (
+              <div className="flex items-center gap-1">
+                <Gauge className="size-4 text-primary" />
+                <span>HW</span>
+              </div>
+            )}
+
+            {wifiStrength !== null && (
+              <div className="flex items-center gap-1">
+                <Wifi className="size-4 text-primary" />
+                <span>{wifiStrength} dBm</span>
+              </div>
+            )}
+
+            {batteryPercentage !== null && (
+              <div className="flex items-center gap-1">
+                <Battery className="size-4 text-primary" />
+                <span>{batteryPercentage}%</span>
+              </div>
+            )}
           </div>
-        </div>
-        <div className="pt-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">
-              {device.device_type === "valve" ? (isOn ? "Open" : "Closed") : (isOn ? "Running" : "Stopped")}
-            </span>
-            <Switch
-              checked={isOn}
-              onCheckedChange={setIsOn}
-              aria-label={nextActionLabel}
-            />
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
-}
+};
