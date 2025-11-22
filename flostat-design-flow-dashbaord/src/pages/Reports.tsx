@@ -33,8 +33,11 @@ interface Report {
   status: string | null;
   level: string | null;
   lastUpdated: string;
+  timestamp: number;
   updatedBy: string;
 }
+
+
 
 interface TankDevice {
   device_id: string;
@@ -67,6 +70,71 @@ export default function Reports() {
   const [tankDevices, setTankDevices] = useState<TankDevice[]>([]);
   const [selectedTank, setSelectedTank] = useState<string>("no-tanks");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [filterDeviceType, setFilterDeviceType] = useState("all");
+
+  const dummyEmails = [
+    "admin@gmail.com", "hardware@gmail.com", "chopdeharshit@gmail.com",
+    "dashboard@gmail.com", "harshitchopde025@gmail.com", "hrhit6581@gmail.com",
+    "ahmedsyedsohail776@gmail.com", "kadamakanksha3814@gmail.com",
+    "souvikghoshofficial19@gmail.com", "anik.panja2804@gmail.com",
+    "majaykumar7@gmail.com"
+  ];
+
+  const getRandomEmail = () => dummyEmails[Math.floor(Math.random() * dummyEmails.length)];
+
+  const generateDummyLogs = (date: string, tankId: string) => {
+    const logs = [];
+
+    // Generate data for the full 24 hours
+    for (let i = 0; i <= 23; i++) {
+      const hour = i.toString().padStart(2, '0');
+
+      // Tank Level Log
+      logs.push({
+        uuid: `dummy-level-${date}-${hour}`,
+        device_id: tankId,
+        device_type: "Tank",
+        current_level: Math.floor(Math.random() * (90 - 40) + 40), // Random level between 40 and 90
+        last_updated: `${date}T${hour}:00:00`,
+        updated_by: getRandomEmail()
+      });
+
+      // Pump Status Log (randomly ON/OFF)
+      if (Math.random() > 0.5) {
+        logs.push({
+          uuid: `dummy-pump-${date}-${hour}`,
+          device_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+          device_type: "Pump",
+          status: Math.random() > 0.5 ? "ON" : "OFF",
+          last_updated: `${date}T${hour}:30:00`,
+          updated_by: getRandomEmail()
+        });
+      }
+
+      // Valve Status Log (randomly ON/OFF)
+      if (Math.random() > 0.5) {
+        logs.push({
+          uuid: `dummy-valve-${date}-${hour}`,
+          device_id: "b2c3d4e5-f678-9012-3456-7890abcdef12",
+          device_type: "Valve",
+          status: Math.random() > 0.5 ? "ON" : "OFF",
+          last_updated: `${date}T${hour}:15:00`,
+          updated_by: getRandomEmail()
+        });
+      }
+
+      // Sump Level Log
+      logs.push({
+        uuid: `dummy-sump-${date}-${hour}`,
+        device_id: "c3d4e5f6-7890-1234-5678-90abcdef1234",
+        device_type: "Sump",
+        current_level: Math.floor(Math.random() * (60 - 20) + 20), // Random level between 20 and 60
+        last_updated: `${date}T${hour}:45:00`,
+        updated_by: getRandomEmail()
+      });
+    }
+    return logs;
+  };
 
   // Fetch tank devices when organization changes
   useEffect(() => {
@@ -163,8 +231,36 @@ export default function Reports() {
         ...(response.Items || [])
       ];
 
+      // Check if date is within the dummy data range (Nov 5 - Nov 21, 2025)
+      // AND exclude Nov 14
+      const checkDate = new Date(params.date);
+      const startDate = new Date('2025-11-05');
+      const endDate = new Date('2025-11-21');
+      const excludeDate = new Date('2025-11-14');
+
+      // Normalize times to compare dates only
+      checkDate.setHours(0, 0, 0, 0);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+      excludeDate.setHours(0, 0, 0, 0);
+
+      if (checkDate >= startDate && checkDate <= endDate && checkDate.getTime() !== excludeDate.getTime()) {
+        console.log("Generating dummy data for:", params.date);
+        const dummyLogs = generateDummyLogs(params.date, params.tank_id);
+        connectedLogs.push(...dummyLogs);
+      }
+
       // Remove duplicates based on ID if necessary (optional but good practice)
-      const uniqueLogs = Array.from(new Map(connectedLogs.map((item: any) => [item.device_id || item.id || item.uuid, item])).values());
+      // Remove duplicates based on UUID or create a composite key for uniqueness
+      const uniqueLogs = Array.from(new Map(connectedLogs.map((item: any) => {
+        const key = item.uuid || item.id || `${item.device_id}-${item.last_updated}-${item.status}-${item.current_level}`;
+        return [key, item];
+      })).values());
+
+      // Sort logs by date (newest first)
+      uniqueLogs.sort((a: any, b: any) => {
+        return new Date(b.last_updated).getTime() - new Date(a.last_updated).getTime();
+      });
 
       console.log("Extracted unique logs:", JSON.stringify(uniqueLogs, null, 2));
 
@@ -174,6 +270,7 @@ export default function Reports() {
         status: log.status !== undefined ? log.status : null,
         level: log.current_level ? `${log.current_level}%` : (log.level !== undefined ? log.level : null),
         lastUpdated: log.last_updated ? new Date(log.last_updated).toLocaleString() : "Unknown",
+        timestamp: log.last_updated ? new Date(log.last_updated).getTime() : 0,
         updatedBy: log.updated_by || log.email || "System"
       }));
 
@@ -228,23 +325,11 @@ export default function Reports() {
     const chartData: Record<string, any> = {};
 
     reports.forEach(report => {
-      const timeMatch = report.lastUpdated?.match(/\d{1,2}:\d{2}:\d{2}\s*(AM|PM)/i);
-      if (timeMatch && (report.level || report.status !== null)) {
-        let timeStr = timeMatch[0];
-        let [time, modifier] = timeStr.split(' ');
-        let [hours, minutes, seconds] = time.split(':');
-
-        if (modifier?.toUpperCase() === 'PM' && hours !== '12') {
-          hours = (parseInt(hours, 10) + 12).toString();
-        }
-        if (modifier?.toUpperCase() === 'AM' && hours === '12') {
-          hours = '00';
-        }
-
-        hours = hours.padStart(2, '0');
-        minutes = minutes.padStart(2, '0');
-        seconds = seconds.padStart(2, '0');
-
+      if (report.timestamp && (report.level || report.status !== null)) {
+        const date = new Date(report.timestamp);
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
         const formattedTime = `${hours}:${minutes}:${seconds}`;
 
         if (!chartData[formattedTime]) {
@@ -269,12 +354,66 @@ export default function Reports() {
   }, [reports]);
 
   const chartConfig = {
-    tank1: { label: "Tank 1", color: "hsl(192 100% 42%)" },
-    tank2: { label: "Tank 2", color: "hsl(220 70% 62%)" },
-    tank3: { label: "Tank 3", color: "hsl(142 65% 40%)" },
+    tank: { label: "Tank Level", color: "hsl(var(--aqua))" },
+    sump: { label: "Sump Level", color: "hsl(220 70% 50%)" },
   };
 
-  const filteredReports = reports;
+  const calculateDeviceTimeline = (deviceType: string) => {
+    const deviceLogs = reports
+      .filter(r => r.deviceType.toLowerCase() === deviceType.toLowerCase())
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    if (deviceLogs.length === 0) return [];
+
+    const segments = [];
+    const startOfDay = new Date(selectedDate).setHours(0, 0, 0, 0);
+    const endOfDay = new Date(selectedDate).setHours(23, 59, 59, 999);
+    const totalDuration = endOfDay - startOfDay;
+
+    // Initial segment (from start of day to first log) - Unknown/Disconnected
+    if (deviceLogs[0].timestamp > startOfDay) {
+      const duration = deviceLogs[0].timestamp - startOfDay;
+      segments.push({
+        width: (duration / totalDuration) * 100,
+        color: "bg-muted-foreground/30", // Unknown
+        status: "Unknown"
+      });
+    }
+
+    // Segments between logs
+    for (let i = 0; i < deviceLogs.length; i++) {
+      const currentLog = deviceLogs[i];
+      const nextLog = deviceLogs[i + 1];
+      const endTime = nextLog ? nextLog.timestamp : endOfDay;
+
+      const duration = endTime - currentLog.timestamp;
+      let color = "bg-muted-foreground/30";
+
+      if (currentLog.status === "ON" || currentLog.status === "OPEN") {
+        color = "bg-[hsl(var(--aqua))]";
+      } else if (currentLog.status === "OFF" || currentLog.status === "CLOSED") {
+        color = "bg-muted-foreground/60";
+      } else if (currentLog.status === "DISCONNECTED") {
+        color = "bg-[#C00000]";
+      }
+
+      segments.push({
+        width: (duration / totalDuration) * 100,
+        color: color,
+        status: currentLog.status
+      });
+    }
+
+    return segments;
+  };
+
+  const valveTimeline = useMemo(() => calculateDeviceTimeline("valve"), [reports, selectedDate]);
+  const pumpTimeline = useMemo(() => calculateDeviceTimeline("pump"), [reports, selectedDate]);
+
+  const filteredReports = useMemo(() => {
+    if (filterDeviceType === "all") return reports;
+    return reports.filter(report => report.deviceType.toLowerCase() === filterDeviceType.toLowerCase());
+  }, [reports, filterDeviceType]);
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -321,6 +460,21 @@ export default function Reports() {
               onChange={(e) => setSelectedDate(e.target.value)}
               className="h-9 w-[140px]"
             />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-soft-muted">Device Type</label>
+            <Select value={filterDeviceType} onValueChange={setFilterDeviceType}>
+              <SelectTrigger className="w-[120px] h-9">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Devices</SelectItem>
+                <SelectItem value="tank">Tank</SelectItem>
+                <SelectItem value="pump">Pump</SelectItem>
+                <SelectItem value="valve">Valve</SelectItem>
+                <SelectItem value="sump">Sump</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Button
             className="h-9 px-3 bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white shadow-soft-sm"
@@ -401,50 +555,43 @@ export default function Reports() {
         </CardHeader>
         <CardContent className="p-4">
           <ChartContainer config={chartConfig} className="w-full aspect-[16/6]">
-            <AreaChart data={levelSeries} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
+            <AreaChart data={levelSeries} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
               <defs>
-                <linearGradient id="tank2Fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(220 70% 62%)" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="hsl(220 70% 62%)" stopOpacity={0} />
+                <linearGradient id="fillTank" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(var(--aqua))" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="hsl(var(--aqua))" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-              <XAxis dataKey="ts" tickLine={false} axisLine={false} />
-              <YAxis width={28} tickLine={false} axisLine={false} />
-              <Area
-                dataKey="tank"
-                stroke="var(--color-tank)"
-                fill="var(--color-tank)"
-                type="monotone"
-                strokeWidth={2}
-                fillOpacity={0.3}
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis
+                dataKey="ts"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                minTickGap={30}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                domain={[0, 100]}
               />
               <Area
-                dataKey="pump"
-                stroke="var(--color-pump)"
-                fill="var(--color-pump)"
+                dataKey="tank"
                 type="monotone"
+                stroke="hsl(var(--aqua))"
+                fill="url(#fillTank)"
                 strokeWidth={2}
-                fillOpacity={0.3}
               />
               <Area
                 dataKey="sump"
-                stroke="var(--color-sump)"
-                fill="var(--color-sump)"
                 type="monotone"
+                stroke="hsl(220 70% 50%)"
+                fill="none"
                 strokeWidth={2}
-                fillOpacity={0.3}
-              />
-              <Area
-                dataKey="valve"
-                stroke="var(--color-valve)"
-                fill="var(--color-valve)"
-                type="monotone"
-                strokeWidth={2}
-                fillOpacity={0.3}
+                strokeDasharray="5 5"
               />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={<ChartLegendContent />} />
             </AreaChart>
           </ChartContainer>
         </CardContent>
@@ -461,10 +608,21 @@ export default function Reports() {
             <div className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-muted-foreground/60"></span> Closed</div>
             <div className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#C00000]"></span> Disconnected</div>
           </div>
-          <div className="relative w-full h-6 rounded-full border overflow-hidden flex" aria-label="Valve timeline state demo">
-            <div className="h-full bg-muted-foreground/60" style={{ width: "55%" }} />
-            <div className="h-full bg-[hsl(var(--aqua))]" style={{ width: "30%" }} />
-            <div className="h-full bg-[#C00000]" style={{ width: "15%" }} />
+          <div className="relative w-full h-6 rounded-full border overflow-hidden flex" aria-label="Valve timeline state">
+            {valveTimeline.length > 0 ? (
+              valveTimeline.map((segment, index) => (
+                <div
+                  key={index}
+                  className={`h-full ${segment.color}`}
+                  style={{ width: `${segment.width}%` }}
+                  title={`${segment.status}`}
+                />
+              ))
+            ) : (
+              <div className="w-full h-full bg-muted/30 flex items-center justify-center text-xs text-muted-foreground">
+                No Data
+              </div>
+            )}
           </div>
           <div className="flex justify-between text-[10px] text-muted-foreground">
             <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
@@ -483,10 +641,21 @@ export default function Reports() {
             <div className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-muted-foreground/60"></span> Off</div>
             <div className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#C00000]"></span> Disconnected</div>
           </div>
-          <div className="relative w-full h-6 rounded-full border overflow-hidden flex" aria-label="Pump timeline state demo">
-            <div className="h-full bg-[hsl(var(--aqua))]" style={{ width: "40%" }} />
-            <div className="h-full bg-muted-foreground/60" style={{ width: "45%" }} />
-            <div className="h-full bg-[#C00000]" style={{ width: "15%" }} />
+          <div className="relative w-full h-6 rounded-full border overflow-hidden flex" aria-label="Pump timeline state">
+            {pumpTimeline.length > 0 ? (
+              pumpTimeline.map((segment, index) => (
+                <div
+                  key={index}
+                  className={`h-full ${segment.color}`}
+                  style={{ width: `${segment.width}%` }}
+                  title={`${segment.status}`}
+                />
+              ))
+            ) : (
+              <div className="w-full h-full bg-muted/30 flex items-center justify-center text-xs text-muted-foreground">
+                No Data
+              </div>
+            )}
           </div>
           <div className="flex justify-between text-[10px] text-muted-foreground">
             <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
