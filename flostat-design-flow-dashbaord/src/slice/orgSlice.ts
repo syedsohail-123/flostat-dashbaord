@@ -1,11 +1,14 @@
 // slice/orgSlice.ts
+import { Block } from "@/components/types/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface OrgState {
   orgUsers: any[] | null;
   org_id: string | null;
   blockModes: Record<string, string>;
+  blocksName: Record<string, string>;
   blocks: any[];
+
   currentBlock: any;
   logs: any[];
 }
@@ -14,6 +17,7 @@ const initialState: OrgState = {
   orgUsers: null,
   org_id: null,
   blockModes: {},
+  blocksName:{},
   blocks: [],
   currentBlock: null,
   logs: [],
@@ -41,6 +45,12 @@ const orgSlice = createSlice({
     ) => {
       state.blockModes[action.payload.block_id] = action.payload.mode;
     },
+    setBlocksName:( state, action: PayloadAction<Block[]>) =>{
+      state.blocksName = {};
+      action.payload.forEach((block)=>{
+        state.blocksName[block.block_id]=block.block_name ?? "";
+      });
+    },
     setCurrentBlock: (state, action: PayloadAction<any>) => {
       state.currentBlock = action.payload;
     },
@@ -56,6 +66,7 @@ export const {
   addLog,
   setOrgUsers,
   setBlockMode,
+  setBlocksName,
   setCurrentBlock,
   setBlocks,
 } = orgSlice.actions;
