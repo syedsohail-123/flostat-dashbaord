@@ -25,6 +25,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { DEVICE_TYPE } from "@/utils/constants";
 
 interface CreateScheduleModalProps {
     open: boolean;
@@ -89,9 +90,10 @@ export const CreateScheduleModal = ({
         setLoadingDevices(true);
         try {
             const res = await getOrgAllDevice(org_id, token!);
+   
             if (res) {
                 // Filter devices by block_id
-                const blockDevices = res.filter((d: Device) => d.block_id === selectedBlockId);
+                const blockDevices = res.filter((d: Device) => (d.device_type===DEVICE_TYPE.PUMP || d.device_type===DEVICE_TYPE.VALVE ) && d.block_id === selectedBlockId);
                 setDevices(blockDevices);
             }
         } catch (err) {
@@ -120,6 +122,7 @@ export const CreateScheduleModal = ({
         };
 
         const res = await createSchedule(data, token!);
+        console.log("RES create sch: ",res);
         if (res) {
             toast.success("Schedule created successfully!");
             dispatch(addSchedule(res));

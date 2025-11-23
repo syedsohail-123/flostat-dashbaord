@@ -200,14 +200,17 @@ function wireClientEvents() {
           break;
 
         case "SCHEDULE_ACK":
+          console.log("Schedule ack");
           store.dispatch(ackScheduleCreate(msg.data));
           break;
 
         case "SCHEDULE_ACK_DELETE":
+           console.log("Schedule del ack");
           store.dispatch(ackScheduleDelete(msg.data));
           break;
 
         case "SCHEDULE_ACK_UPDATE":
+           console.log("Schedule update ack");
           store.dispatch(ackScheduleUpdate(msg.data));
           break;
 

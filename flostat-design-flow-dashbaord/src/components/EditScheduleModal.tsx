@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSelector, useDispatch } from "react-redux";
-import { updateScheduleApis } from "@/lib/operations/scheduleApis";
-import { updateSchedule } from "@/slice/scheduleSlice";
-import { Schedule } from "@/slice/scheduleSlice";
+
 import { RootState } from "@/store";
 import {
     Dialog,
@@ -16,6 +14,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { updateSchedule } from "@/lib/operations/scheduleApis";
+import { Schedule } from "./types/types";
+import { scheduleUpdate } from "@/slice/scheduleSlice";
 
 interface EditScheduleModalProps {
     open: boolean;
@@ -37,7 +38,7 @@ export const EditScheduleModal = ({
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    const handleUpdate = () => {
+    const handleUpdate = async () => {
         console.log("handleUpdate called", form);
         if (!form.start_time || !form.end_time) {
             toast.error("Start time and end time are required!");
@@ -50,17 +51,21 @@ export const EditScheduleModal = ({
         };
 
         // Update the schedule in Redux state (frontend only)
-        const updatedSchedule = {
+        const updated = {
             ...form,
             start_time: formatTime(form.start_time),
             end_time: formatTime(form.end_time),
         };
 
-        console.log("Updating schedule in Redux:", updatedSchedule);
-
+        console.log("Updating schedule in Redux:", updated);
+        console.log("Token : ",token);
+        const res = await updateSchedule(updated,token);
+        console.log("Edit response: ",res);
+        if(res){
+            dispatch(scheduleUpdate(res));
+            toast.success("Schedule updated successfully!");
+        }
         // Dispatch to Redux to update the local state
-        dispatch(updateSchedule(updatedSchedule));
-        toast.success("Schedule updated successfully!");
         onOpenChange(false);
     };
 
