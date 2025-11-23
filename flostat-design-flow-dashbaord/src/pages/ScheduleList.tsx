@@ -11,19 +11,22 @@ import { RotateCw, Edit, Trash2, Plus, Clock, Calendar, Zap } from "lucide-react
 import { CreateScheduleModal } from "@/components/CreateScheduleModal";
 import { EditScheduleModal } from "@/components/EditScheduleModal";
 import { DeleteScheduleModal } from "@/components/DeleteScheduleModal";
+import { SCHEDULE_COMPLETED_STATUS } from "@/utils/constants";
 
 type ModalMode = 'create' | 'edit' | 'delete' | null;
 
 export default function ScheduleList() {
     const dispatch = useDispatch();
     const { token } = useSelector((state: RootState) => state.auth);
-    const { org_id } = useSelector((state: RootState) => state.org);
+    const { org_id,blocksName } = useSelector((state: RootState) => state.org);
     const { schedules } = useSelector((state: RootState) => state.schedule);
+    const { devicesObject } = useSelector((state: RootState) => state.device);
 
     const [isLoading, setIsLoading] = useState(false);
     const [modalMode, setModalMode] = useState<ModalMode>(null);
     const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
 
+    console.log("Schedule lists: ",schedules);
     // Fetch schedules on component mount
     useEffect(() => {
         if (org_id && token) {
@@ -147,11 +150,11 @@ export default function ScheduleList() {
                                             <p className="text-xs text-soft-muted">Start Time</p>
                                         </div>
                                     </div>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium shadow-soft-sm ${schedule.schedule_status === 'active' || schedule.schedule_status === 'CREATING'
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium shadow-soft-sm ${schedule.schedule_status === 'active' || schedule.schedule_status === SCHEDULE_COMPLETED_STATUS.CREATED ||  schedule.schedule_status === SCHEDULE_COMPLETED_STATUS.UPDATED
                                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                             : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                                         }`}>
-                                        {schedule.schedule_status === 'CREATING' ? 'Scheduled' : (schedule.schedule_status || 'Scheduled')}
+                                        {schedule.schedule_status === SCHEDULE_COMPLETED_STATUS.CREATED || schedule.schedule_status === SCHEDULE_COMPLETED_STATUS.UPDATED ? 'Scheduled' : (schedule.schedule_status || 'Scheduled')}
                                     </span>
                                 </div>
                             </CardHeader>
@@ -169,11 +172,11 @@ export default function ScheduleList() {
                                 <div className="rounded-lg bg-muted/30 p-3 space-y-2 text-sm">
                                     <div className="flex justify-between">
                                         <span className="text-soft-muted">Device:</span>
-                                        <span className="font-medium text-soft truncate ml-2">{schedule.device_id}</span>
+                                        <span className="font-medium text-soft truncate ml-2">{devicesObject[schedule.device_id] || schedule.device_id}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-soft-muted">Block:</span>
-                                        <span className="font-medium text-soft truncate ml-2">{schedule.block_id}</span>
+                                        <span className="font-medium text-soft truncate ml-2">{blocksName[schedule.block_id] || schedule.block_id}</span>
                                     </div>
                                     {schedule.recurrence && (
                                         <div className="flex justify-between">

@@ -18,7 +18,7 @@ interface DeviceCardProps {
 
 export const DeviceCard = ({ device }: DeviceCardProps) => {
   const { device_name, device_type } = device;
-  console.log("Device in card: ",device)
+  // console.log("Device in card: ",device)
   const {blocksName} = useSelector((state: RootState)=> state.org);
   const isOn = (device_type==="pump" || device_type==="valve") && device?.status?.toLowerCase() === "ON";
 

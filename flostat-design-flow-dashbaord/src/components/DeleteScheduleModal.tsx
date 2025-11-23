@@ -1,9 +1,8 @@
 import { toast } from "sonner";
 import { formatTimeTo12H } from "@/utils/timeUtils";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteScheduleCall } from "@/lib/operations/scheduleApis";
-import { deleteSchedule } from "@/slice/scheduleSlice";
-import { Schedule } from "@/slice/scheduleSlice";
+
+
 import { RootState } from "@/store";
 import {
     Dialog,
@@ -15,6 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import { Schedule } from "./types/types";
+import { scheduleDelete } from "@/slice/scheduleSlice";
+import { deleteScheduleCall } from "@/lib/operations/scheduleApis";
 
 interface DeleteScheduleModalProps {
     open: boolean;
@@ -30,12 +32,16 @@ export const DeleteScheduleModal = ({
     const { token } = useSelector((state: RootState) => state.auth);
     const dispatch = useDispatch();
 
-    const handleDelete = () => {
+    const handleDelete = async() => {
         console.log("handleDelete called for schedule:", schedule);
+        const res = await deleteScheduleCall(schedule,token);
+        console.log("RES: ",res);
 
-        // Delete the schedule from Redux state (frontend only)
-        dispatch(deleteSchedule(schedule.schedule_id));
+        if(res){
+        dispatch(scheduleDelete(schedule.schedule_id));
         toast.success("Schedule removed successfully!");
+        }
+       
         onOpenChange(false);
     };
 

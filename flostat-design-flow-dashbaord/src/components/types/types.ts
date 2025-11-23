@@ -66,6 +66,22 @@ export interface GoogleOuthResponse {
   token?: string;
   state: string;
 }
+export interface Schedule {
+schedule_id?: string;
+ org_id?: string;
+  device_id?: string;
+  block_id?: string;
+  device_type?: string;
+  start_time?: string;
+  end_time?: string;
+   pump_ack?: boolean;
+  valve_ack?: boolean;
+  schedule_status?: string;
+  ack?:boolean;
+  [key: string]: any;
+}
+
+
 
 export interface SignUpPayload {
   email: string;

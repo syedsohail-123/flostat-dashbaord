@@ -1,6 +1,7 @@
 import toast from "react-hot-toast";
 import { orgEndpoints } from "../endPoints";
 import { apiClient } from "../httpClient";
+import { Schedule } from "@/components/types/types";
 
 // Extract endpoints
 const {
@@ -12,12 +13,6 @@ const {
 } = orgEndpoints;
 
 // ---------- Interfaces ---------- //
-export interface Schedule {
-  id?: string;
-  name?: string;
-  time?: string;
-  [key: string]: any;
-}
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -34,7 +29,7 @@ export const createSchedule = async (
 ): Promise<Schedule | null> => {
   const toastId = toast.loading("Loading...");
   let result: Schedule | null = null;
-
+  console.log("SEding data create: ",data)
   try {
     const res = await apiClient({
       method: "POST",
@@ -44,7 +39,7 @@ export const createSchedule = async (
         Authorization: `Bearer ${token}`
       }
     });
-
+    console.log("RESP of schedule create: ",res);
     const response: ApiResponse<Schedule> = res.data;
 
     if (!response.success) {
@@ -73,7 +68,7 @@ export const createSchedule = async (
 };
 
 // ---------- UPDATE SCHEDULE ---------- //
-export const updateScheduleApis = async (
+export const updateSchedule = async (
   data: any,
   token: string
 ): Promise<Schedule | null> => {
@@ -81,6 +76,7 @@ export const updateScheduleApis = async (
   let result: Schedule | null = null;
 
   try {
+    console.log("Sending data: ",data)
     const res = await apiClient({
       method: "PUT",
       url: UPDATE_SCHEDULES,
@@ -89,7 +85,7 @@ export const updateScheduleApis = async (
         Authorization: `Bearer ${token}`
       }
     });
-
+    console.log("REsponse: ",res);
     const response: ApiResponse<Schedule> = res.data;
 
     if (!response.success) {

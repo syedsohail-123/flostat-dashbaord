@@ -1,15 +1,8 @@
 // slice/scheduleSlice.ts
+import { Schedule } from "@/components/types/types";
+import { SCHEDULE_STATUS_MAP } from "@/utils/constants";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export interface Schedule {
-  schedule_id: string;
-  pump_ack?: boolean;
-  valve_ack?: boolean;
-  schedule_status?: string;
-  start_time?: string;
-  end_time?: string;
-  [key: string]: any;
-}
 
 interface ScheduleState {
   schedules: Schedule[];
@@ -62,7 +55,10 @@ const scheduleSlice = createSlice({
       if (ack) {
         if (device_type === "valve") schedule.valve_ack = true;
         if (device_type === "pump") schedule.pump_ack = true;
-        if (schedule_status) schedule.schedule_status = schedule_status;
+        schedule.schedule_status = schedule_status;
+        if(schedule.valve_ack && schedule.pump_ack){
+          schedule.schedule_status= SCHEDULE_STATUS_MAP[schedule_status];
+        }
       }
     },
 
@@ -127,17 +123,20 @@ const scheduleSlice = createSlice({
         schedule.start_time = start_time;
         schedule.end_time = end_time;
         schedule.schedule_status = schedule_status;
+        if(schedule.valve_ack && schedule.pump_ack){
+          schedule.schedule_status= SCHEDULE_STATUS_MAP[schedule_status];
+        }
       }
     },
 
-    updateSchedule: (state, action: PayloadAction<Schedule>) => {
+    scheduleUpdate: (state, action: PayloadAction<Schedule>) => {
       const index = state.schedules.findIndex(
         (s) => s.schedule_id === action.payload.schedule_id
       );
       if (index >= 0) state.schedules[index] = action.payload;
     },
 
-    deleteSchedule: (state, action: PayloadAction<string>) => {
+    scheduleDelete: (state, action: PayloadAction<string>) => {
       state.schedules = state.schedules.filter(
         (s) => s.schedule_id !== action.payload
       );
@@ -151,8 +150,8 @@ export const {
   ackScheduleDelete,
   ackScheduleUpdate,
   addSchedule,
-  updateSchedule,
-  deleteSchedule,
+  scheduleDelete,
+  scheduleUpdate,
 } = scheduleSlice.actions;
 
 export default scheduleSlice.reducer;
