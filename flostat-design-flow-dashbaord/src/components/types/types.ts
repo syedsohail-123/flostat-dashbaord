@@ -19,7 +19,7 @@ export interface User {
 export interface Block{
     org_id: string;
     block_name: string;
-    block_id?:  string;
+    block_id:  string;
     location?: string;
     description?: string;
 }

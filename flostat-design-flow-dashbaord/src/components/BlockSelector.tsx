@@ -14,10 +14,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Block } from "./types/types";
 
-
 interface BlockSelectorProps {
-  availableBlocks: Block[];           // Now comes as prop
-  selectedBlocks: string[];
+  availableBlocks: Block[];
+  selectedBlocks: string[]; // block_id[]
   onBlocksChange: (blocks: string[]) => void;
   label?: string;
   className?: string;
@@ -37,22 +36,18 @@ export function BlockSelector({
   const [open, setOpen] = React.useState(false);
 
   const toggleBlock = (blockId: string) => {
-    const block = availableBlocks.find((b) => b.block_id === blockId);
-    if (!block) return;
+    const newSelection = selectedBlocks.includes(blockId)
+      ? selectedBlocks.filter((id) => id !== blockId)
+      : [...selectedBlocks, blockId];
 
-    const blockName = block?.block_name;
-    const newSelection = selectedBlocks.includes(blockName)
-      ? selectedBlocks.filter((name) => name !== blockName)
-      : [...selectedBlocks, blockName];
     onBlocksChange(newSelection);
-    //close the popover after selection
-    setOpen(false)
+    setOpen(false);
   };
 
   const clearAll = () => {
     onBlocksChange([]);
   };
-
+  console.log("SElected block in sel: ",selectedBlocks)
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -71,14 +66,10 @@ export function BlockSelector({
                 ? `${selectedBlocks.length} ${label}${selectedBlocks.length !== 1 ? "s" : ""} selected`
                 : `Select ${label}${compact ? "" : "s"}`}
             </span>
-            <ChevronDown
-              className={cn(
-                "ml-2 h-4 w-4 shrink-0 opacity-50",
-                compact ? "h-3 w-3" : ""
-              )}
-            />
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
+
         <PopoverContent className="w-[200px] p-0">
           <Command>
             <CommandInput placeholder={`Search ${label.toLowerCase()}s...`} />
@@ -94,13 +85,17 @@ export function BlockSelector({
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        selectedBlocks.includes(block.block_name) ? "opacity-100" : "opacity-0"
+                        selectedBlocks.includes(block.block_id)
+                          ? "opacity-100"
+                          : "opacity-0"
                       )}
                     />
                     <div className="flex flex-col">
                       <span>{block.block_name}</span>
                       {block.location && (
-                        <span className="text-xs text-muted-foreground">{block.location}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {block.location}
+                        </span>
                       )}
                     </div>
                   </CommandItem>
@@ -110,6 +105,7 @@ export function BlockSelector({
           </Command>
         </PopoverContent>
       </Popover>
+
       {showFilterChip && selectedBlocks.length > 0 && (
         <Badge
           variant="secondary"

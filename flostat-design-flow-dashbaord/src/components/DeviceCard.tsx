@@ -33,10 +33,7 @@ export const DeviceCard = ({ device }: DeviceCardProps) => {
   const derivedStatus: "connected" | "disconnected" = device.hardware_status
     ? device.hardware_status
     : "disconnected";
-  if(device.device_id==="31f39b4e-92df-40f8-9bb5-b0c1f58bedff"){
-    console.log("Devis status: ",device,isOn);
-  
-  }
+
   const handleDeviceUpdate = async (device, state,level = null) => {
     console.log("State: ",state)
     // const newStatus = device.status === "ON" ? "OFF" : "ON";
@@ -175,11 +172,11 @@ export const DeviceCard = ({ device }: DeviceCardProps) => {
               </span>
 
               {/* UI Switch */}
-              <Switch
+              {/* <Switch
                 checked={isOn}
                 onCheckedChange={(state) => handleDeviceUpdate(device,state)}
                 aria-label={nextActionLabel}
-              />
+              /> */}
             </div>
           )}
           
