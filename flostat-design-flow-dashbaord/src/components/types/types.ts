@@ -66,6 +66,14 @@ export interface GoogleOuthResponse {
   token?: string;
   state: string;
 }
+export interface UpdateDeviceStatusPayload {
+  device_id: string;
+  status?: string;
+   org_id?: string;
+   current_level?: string;
+   device_type: string;
+}
+
 export interface Schedule {
 schedule_id?: string;
  org_id?: string;

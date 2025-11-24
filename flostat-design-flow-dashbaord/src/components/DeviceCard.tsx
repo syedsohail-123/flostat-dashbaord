@@ -11,6 +11,10 @@ import { StatusBadge } from "./StatusBadge";
 import { StatusDeviceBadge } from "./StatusDeviceBadge";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { DEVICE_TYPE, PUMP_STATUS, VALVE_STATUS } from "@/utils/constants";
+import { toast } from "sonner";
+import { updateDeviceStatus } from "@/lib/operations/dashboardApis";
+import { Switch } from "./ui/switch";
 
 interface DeviceCardProps {
   device: any;
@@ -18,14 +22,70 @@ interface DeviceCardProps {
 
 export const DeviceCard = ({ device }: DeviceCardProps) => {
   const { device_name, device_type } = device;
-  // console.log("Device in card: ",device)
-  const {blocksName} = useSelector((state: RootState)=> state.org);
-  const isOn = (device_type==="pump" || device_type==="valve") && device?.status?.toLowerCase() === "ON";
+  
 
+  const { blocksName } = useSelector((state: RootState) => state.org);
+  const isOn =
+    (device_type === "pump" && device?.status === "ON") ||  (device_type === "valve" && device?.status === VALVE_STATUS.OPEN);
+  const { token } = useSelector((state: RootState) => state.auth);
+  const nextActionLabel = device.device_type === "valve" ? (isOn ? "Close valve" : "Open valve") : (isOn ? "Turn power off" : "Turn power on");
   // status correction
-  const derivedStatus: "connected" | "disconnected" =
-    device.hardware_status? device.hardware_status:"disconnected";
-    
+  const derivedStatus: "connected" | "disconnected" = device.hardware_status
+    ? device.hardware_status
+    : "disconnected";
+  if(device.device_id==="31f39b4e-92df-40f8-9bb5-b0c1f58bedff"){
+    console.log("Devis status: ",device,isOn);
+  
+  }
+  const handleDeviceUpdate = async (device, state,level = null) => {
+    console.log("State: ",state)
+    // const newStatus = device.status === "ON" ? "OFF" : "ON";
+    if (!device || !device.device_type || !device.device_id || !device.org_id) {
+      toast.error("Missing params!");
+      return;
+    }
+    const data = {
+      device_type: device.device_type,
+      device_id: device.device_id,
+      org_id: device.org_id,
+    };
+    let newStatus = null;
+    if (
+      device?.device_type === DEVICE_TYPE.SUMP ||
+      device?.device_type === DEVICE_TYPE.TANK
+    ) {
+      if (!level || level < 0 || level > 100) {
+        toast.error("Level required or in between 0-100 " + level);
+        return;
+      }
+      data["current_level"] = Number(level);
+      data["block_id"] = device?.block_id ? device.block_id : "none";
+    } else if (device?.device_type === DEVICE_TYPE.PUMP) {
+      // PUMP Update status  call
+      newStatus = device.status === "ON" ? "OFF" : "ON";
+      data["status"] = newStatus;
+    } else if (device?.device_type === DEVICE_TYPE.VALVE) {
+      // VALVE Update status  call
+      newStatus =
+        device.status === VALVE_STATUS.OPEN
+          ? VALVE_STATUS.CLOSE
+          : VALVE_STATUS.OPEN;
+      data["status"] = newStatus;
+    } else {
+      toast.error("Undefined device_type mention");
+      return;
+    }
+
+    console.log("Send for update: ", data);
+    const result = await updateDeviceStatus(data, token);
+    //  use this when you update and also want to set the devices with status
+    console.log("RE: ", result);
+    if (result) {
+      // device status will update with mqtt
+      // dispatch(setDevices(result));
+    }
+    // updateDevice({ device_id: device.device_id, status: newStatus })
+  };
 
   // icons per device
   const typeIcons = {
@@ -38,11 +98,15 @@ export const DeviceCard = ({ device }: DeviceCardProps) => {
 
   // values
   const statusPercentage =
-    typeof device.status_percentage === "number" ? device.status_percentage : null;
+    typeof device.status_percentage === "number"
+      ? device.status_percentage
+      : null;
   const wifiStrength =
     typeof device.wifi_strength === "number" ? device.wifi_strength : null;
   const batteryPercentage =
-    typeof device.battery_percentage === "number" ? device.battery_percentage : null;
+    typeof device.battery_percentage === "number"
+      ? device.battery_percentage
+      : null;
 
   // tank + sump level category
   function getLevelCategory(level: number | null) {
@@ -58,10 +122,7 @@ export const DeviceCard = ({ device }: DeviceCardProps) => {
       : null;
 
   return (
-    <Card
-      className="rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
- 
-    >
+    <Card className="rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
       <CardContent className="p-4 space-y-4">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -96,12 +157,32 @@ export const DeviceCard = ({ device }: DeviceCardProps) => {
             }
           />
 
-          {(device_type==="tank" || device_type==="sump") && <div className="">
-            {`${device?.status}%`}
-          </div> }
-          {(device_type==="valve" || device_type==="pump") && <div className="">
-            {`${device?.status}`}
-          </div> }
+          {(device_type === "tank" || device_type === "sump") && (
+            <div className="">{`${device?.status}%`}</div>
+          )}
+          {(device_type === "valve" || device_type==="pump") && (
+            <div className="flex items-center justify-end gap-2  w-full py-2">
+              {/* Status label */}
+              <span className="text-sm font-medium">
+                {device_type === "valve"
+                  &&( isOn
+                    ? VALVE_STATUS.OPEN
+                    : VALVE_STATUS.CLOSE)}
+                {device_type === "pump"
+                  &&( isOn
+                    ? PUMP_STATUS.ON
+                    : PUMP_STATUS.OFF)}
+              </span>
+
+              {/* UI Switch */}
+              <Switch
+                checked={isOn}
+                onCheckedChange={(state) => handleDeviceUpdate(device,state)}
+                aria-label={nextActionLabel}
+              />
+            </div>
+          )}
+          
         </div>
 
         {(wifiStrength !== null ||

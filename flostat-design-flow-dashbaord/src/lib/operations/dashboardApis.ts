@@ -2,17 +2,13 @@
 import toast from "react-hot-toast";
 import { deviceEndpoints } from "../endPoints";
 import { apiClient } from "../httpClient";
-import { Device } from "@/components/types/types";
+import { Device, UpdateDeviceStatusPayload } from "@/components/types/types";
 
 const { GET_DEVICE_WITH_STATUS, UPDATE_DEVICE_STATUS } = deviceEndpoints;
 
 // ------------------ TYPES ------------------
 
 
-export interface UpdateDeviceStatusPayload {
-  device_id: string;
-  status: string;
-}
 
 // ------------------ API FUNCTIONS ------------------
 
@@ -51,6 +47,7 @@ export const updateDeviceStatus = async (
   data: UpdateDeviceStatusPayload | UpdateDeviceStatusPayload[],
   token: string
 ): Promise<Device[] | null> => {
+  console.log("Update status: ",data);
   const toastId = toast.loading("Updating device status...");
   try {
      const res = await apiClient({
