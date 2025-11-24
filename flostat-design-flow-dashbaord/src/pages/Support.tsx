@@ -109,8 +109,8 @@ export default function Support() {
 
     // Extract user name from email
     const getUserName = (email: string) => {
-        const name = email.split('@')[0];
-        return name.charAt(0).toUpperCase() + name.slice(1).replace(/[._-]/g, ' ');
+        const name = email?.split('@')[0];
+        return name?.charAt(0).toUpperCase() + name?.slice(1).replace(/[._-]/g, ' ');
     };
 
     // Format file size
@@ -165,7 +165,7 @@ export default function Support() {
                 toast.error("Authentication required");
                 return;
             }
-
+            console.log("Fetch all query")
             const result = await getAllOrgQuery(
                 { org_id: currentOrganization.org_id },
                 authToken
@@ -331,7 +331,7 @@ export default function Support() {
     };
 
     const getFileIcon = (filename: string) => {
-        const ext = filename.split('.').pop()?.toLowerCase();
+        const ext = filename?.split('.').pop()?.toLowerCase();
         if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) {
             return <ImageIcon className="h-4 w-4" />;
         } else if (ext === 'pdf') {

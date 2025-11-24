@@ -23,7 +23,7 @@ import {
   getDeviceWithStatus,
   updateDeviceStatus,
 } from "@/lib/operations/dashboardApis";
-import { Device } from "@/components/types/types";
+import { Block, Device } from "@/components/types/types";
 import { DEVICE_TYPE, MODE, VALVE_STATUS } from "@/utils/constants";
 
 import { cn } from "@/lib/utils";
@@ -87,7 +87,7 @@ const stats = [
 ];
 export default function Dashboard() {
   const dispatch = useDispatch();
-  const { blocks, currentBlock, blockModes } = useSelector(
+  const { blocks, blockModes } = useSelector(
     (state: RootState) => state.org
   );
   const { devices,devicesObject } = useSelector((state: RootState) => state.device);
@@ -147,15 +147,15 @@ export default function Dashboard() {
         }
 
         // Fetch current block mode if block selected
-        if (currentBlock && !blockModes[currentBlock.block_id]) {
-          const result = await getBlockMode(
-            { org_id, block_id: currentBlock.block_id },
-            token
-          );
-          if (result) {
-            dispatch(setBlockMode(result));
-          }
-        }
+        // if (currentBlock && !blockModes[currentBlock.block_id]) {
+        //   const result = await getBlockMode(
+        //     { org_id, block_id: currentBlock.block_id },
+        //     token
+        //   );
+        //   if (result) {
+        //     dispatch(setBlockMode(result));
+        //   }
+        // }
       } catch (err) {
         console.error(err);
         toast.error("Failed to fetch devices or block modes");
@@ -163,7 +163,7 @@ export default function Dashboard() {
     };
 
     if (org_id) fetchDevicesAndModes();
-  }, [org_id, currentBlock]);
+  }, [org_id]);
 
   useEffect(() => {
     fetchLogs();
@@ -186,19 +186,26 @@ export default function Dashboard() {
     }
   };
 
+  console.log("Selected block : ",selectedBlocks )
   const showFilterChip = selectedBlocks.length > 0;
   // Group devices by type inside current block
-  const filteredDevices: Device[] = devices
-    .filter((d) => {
-      if (!currentBlock) return true;
-      if (Array.isArray(d.block_id))
-        return d.block_id.includes(currentBlock.block_id);
-      return d.block_id === currentBlock.block_id;
-    })
-    .filter(
-      (d) =>
-        !search || d.device_name.toLowerCase().includes(search.toLowerCase())
-    );
+const filteredDevices: Device[] = devices
+  .filter((d) => {
+    // Show all if no block selected
+    if (!selectedBlocks || selectedBlocks.length === 0) return true;
+
+    // Normalize device block_id to array
+    const deviceBlocks = Array.isArray(d.block_id)
+      ? d.block_id
+      : [d.block_id];
+
+    // Check if device belongs to any selected block
+    return deviceBlocks.some((id) => selectedBlocks.includes(id));
+  })
+  .filter((d) =>
+    !search || d?.device_name?.toLowerCase().includes(search.toLowerCase())
+  );
+
   console.log("Filter the devices: ", filteredDevices);
   const filteredStats = [
     { ...stats[0], value: filteredDevices.length.toString() },
@@ -224,14 +231,16 @@ export default function Dashboard() {
         .length.toString(),
     },
   ];
+  console.log("d " ,blocks)
   console.log("Filter states: ", filteredStats);
   // Apply common filters once, then render by device type group order
   const visibleDevices = filteredDevices
-    .filter((d) => typeFilter === "all" || d.type === typeFilter)
-    .filter((d) => statusFilter === "all" || d.status === statusFilter)
+    .filter((d) => typeFilter === "all" || d.device_type === typeFilter)
+    .filter((d) => statusFilter === "all" || d.hardware_status === statusFilter || (statusFilter==="disconnected" && !d.hardware_status ))
     .filter(
-      (d) => !search || d.name.toLowerCase().includes(search.toLowerCase())
+      (d) => !search || d.device_name.toLowerCase().includes(search.toLowerCase())
     );
+    
 
   const pumpDevices = visibleDevices.filter(
     (d) => d.device_type === DEVICE_TYPE.PUMP
@@ -251,53 +260,7 @@ export default function Dashboard() {
   // const tankDevices = filteredDevices.filter((d) => d.device_type === DEVICE_TYPE.TANK);
   // const sumpDevices = filteredDevices.filter((d) => d.device_type === DEVICE_TYPE.SUMP);
 
-  // Toggle device status (Pump/Valve/Level)
-  const handleDeviceUpdate = async (device: Device, level?: number) => {
-    if (!device.device_type || !device.device_id || !device.org_id) {
-      toast.error("Missing device params");
-      return;
-    }
 
-    const data: any = {
-      device_id: device.device_id,
-      device_type: device.device_type,
-      org_id: device.org_id,
-    };
-
-    let newStatus: any = null;
-
-    if (device.device_type === DEVICE_TYPE.PUMP) {
-      newStatus = device.status === "ON" ? "OFF" : "ON";
-      data.status = newStatus;
-    } else if (device.device_type === DEVICE_TYPE.VALVE) {
-      newStatus =
-        device.status === VALVE_STATUS.OPEN
-          ? VALVE_STATUS.CLOSE
-          : VALVE_STATUS.OPEN;
-      data.status = newStatus;
-    } else if (
-      device.device_type === DEVICE_TYPE.TANK ||
-      device.device_type === DEVICE_TYPE.SUMP
-    ) {
-      if (level === undefined || level < 0 || level > 100) {
-        toast.error("Level required (0-100)");
-        return;
-      }
-      data.current_level = level;
-      data.block_id = device.block_id ? device.block_id : "none";
-    }
-
-    try {
-      const res = await updateDeviceStatus(data, token);
-      if (res) {
-        toast.success("Device updated successfully");
-        // You may optionally refresh devices or rely on WebSocket/MQTT updates
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update device");
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -340,10 +303,17 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <BlockSelector
+             
               availableBlocks={blocks}
               selectedBlocks={selectedBlocks}
-              onBlocksChange={setSelectedBlocks}
+               onBlocksChange={(ids) => {
+                // console.log("Block: ",ids)
+                setSelectedBlocks(ids);
+            //  console.log("ID: ",ids[0]);   
+            // dispatch(setCurrentBlock(block || null));
+          }}
             />
+
             <div className="relative">
               <Input
                 placeholder="Search devices..."
@@ -370,9 +340,9 @@ export default function Dashboard() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="connected">Active</SelectItem>
                 <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="disconnected">Inactive</SelectItem>
                 <SelectItem value="error">Error</SelectItem>
               </SelectContent>
             </Select>

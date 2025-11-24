@@ -74,9 +74,9 @@ export default function Logs() {
   };
 
   const filteredLogs = logs.filter(log => 
-    log.device_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.updated_by.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.device_id.toLowerCase().includes(searchTerm.toLowerCase())
+    log.device_type?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+    log.updated_by?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+    log.device_id?.toLowerCase().includes(searchTerm?.toLowerCase())
   );
 
   if (loading) {
