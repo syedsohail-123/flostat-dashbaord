@@ -170,7 +170,7 @@ export const acceptInvite = async (
 ): Promise<Org[] | null> => {
   const toastId = toast.loading("Loading...");
   let result: Org[] | null = null;
-
+  console.log("RESSS:before ");
   try {
     const res = await apiClient({
       method: "PUT",
@@ -180,7 +180,7 @@ export const acceptInvite = async (
         Authorization: `Bearer ${token}`,
       },
     });
-
+    console.log("RESSS: ",res);
     const response: ApiResponse = res.data;
 
     if (!response.success) {

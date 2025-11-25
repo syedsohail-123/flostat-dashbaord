@@ -1,4 +1,5 @@
-import toast from "react-hot-toast";
+
+import { toast } from "sonner";
 import { orgEndpoints } from "../endPoints";
 import { apiClient } from "../httpClient";
 import { Schedule } from "@/components/types/types";
@@ -54,6 +55,7 @@ export const createSchedule = async (
     if (error?.response?.status === 409) {
       toast.error("Schedule conflict: A schedule already exists for this time range.");
     } else {
+      console.log("Show toast")
       toast.error(
         error?.response?.data?.message ||
         error?.message ||

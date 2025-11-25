@@ -6,12 +6,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { getAllOrgsOfUser } from "@/lib/operations/userApis";
+import { acceptInvite, getAllOrgsOfUser, registerFcm } from "@/lib/operations/userApis";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { setUserOrgs } from "@/slice/userSlice";
 import { setOrgId } from "@/slice/orgSlice";
+import { roleStatus, USER_DEVICE } from "@/utils/constants";
+import { getFcmToken } from "@/firebase";
+import { apiService } from "@/lib/api";
 
 
 export default function Organizations() {
@@ -84,15 +87,54 @@ const dispatch = useDispatch();
       console.error("Create organization error:", error);
     }
   };
+   useEffect(()=>{
+    const tokenFetchAndRegister = async()=>{
+      const fcmToken = await getFcmToken();
+      console.log("FCM TOKEN: ",fcmToken);
+      if(fcmToken){
+         toast.success("Token Fetch successfull");
+         // call for registerFCM
+         const data = {
+          fcm_token:fcmToken,
+          user_device:USER_DEVICE.LAPTOP
+         }
+        const result = await registerFcm(data,token);
+        if(result){
+          console.log("Register fcm done.")
+        }
+        
+      }else{
+        toast.error("Error in fetching FCM token");
+        console.error("Error in fetching token: ",fcmToken);
+      }
+    }
+    tokenFetchAndRegister();
+  },[]);
+    const handleSelectOrg = async (org)=>{
+    console.log(" org: ",org);
+    if(org.status === roleStatus.PENDING){
+      // handle accepte
+      const result = await acceptInvite(org.org_id,token);
+      console.log("RES: ",result);
+      if(result){
+        dispatch(setUserOrgs(result));
+      }
 
-  const handleSelectOrg = (orgId: string) => {
-    // In a real implementation, you would store the selected organization
-    // For now, we'll just navigate to the dashboard
-    // first select org_id save to redux then navigate
-    console.log("Org id selected: ",orgId);
-    dispatch(setOrgId(orgId));
-    navigate(`/org/${orgId}`);
-  };
+    }else if (org.status === roleStatus.ACTIVE){
+      dispatch(setOrgId(org.org_id))
+      navigate(`/org/${org.org_id}`)
+    }else{
+      toast.error("Account is deactivated or not responding!")
+    }
+  }
+  // const handleSelectOrg = (orgId: string) => {
+  //   // In a real implementation, you would store the selected organization
+  //   // For now, we'll just navigate to the dashboard
+  //   // first select org_id save to redux then navigate
+  //   console.log("Org id selected: ",orgId);
+  //   dispatch(setOrgId(orgId));
+  //   navigate(`/org/${orgId}`);
+  // };
 
   if (loading) {
     return (
@@ -124,7 +166,10 @@ const dispatch = useDispatch();
             <CardContent className="space-y-2">
               {o.role && <p className="text-sm text-soft-muted">Your Role: {o.role}</p>}
               {o.status && <p className="text-xs text-soft-muted">Status: {o.status}</p>}
-              <Button className="mt-2 w-full bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white" onClick={() => handleSelectOrg(o.org_id)}>Enter Dashboard</Button>
+              <Button className="mt-2 w-full bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white" onClick={() => handleSelectOrg(o)}>
+              {o.status===roleStatus.PENDING && <div className="">Accept invite</div> }
+              {o.status===roleStatus.ACTIVE && <div className="">Enter Dashboard</div> }
+              </Button>
             </CardContent>
           </Card>
         ))}
