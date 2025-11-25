@@ -91,17 +91,17 @@ export default function SignUp() {
       setIsLoading(false);
     }
   };
-   const handleGoogleAuth =async () => {
+  const handleGoogleAuth = async () => {
     try {
-    const result = await signInWithPopup(auth,googleProvider);
-    const user = result.user;
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
       // dispatch(googleOuth(user.email,user,navigate));
-      if(result){
+      if (result) {
         dispatch(googleOuth(user.email, user, navigate));
 
       }
     } catch (error) {
-      console.error("Error f ",error)
+      console.error("Error f ", error)
       throw error;
     }
     toast.success("Google Auth clicked (implement logic)");
@@ -374,19 +374,17 @@ export default function SignUp() {
             </div>
 
             <div className="w-full animate-fadeIn" style={{ animationDelay: '0.6s' }}>
-              <Button variant="outline" className="w-full gap-2 hover:bg-[hsl(var(--aqua))]/10 hover:text-[hsl(var(--aqua))] hover:border-[hsl(var(--aqua))]/50 transition-all">
-                 <button
-        onClick={handleGoogleAuth}
-        className="w-full bg-white border border-gray-300 text-black font-semibold py-2 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2"
-      >
-        <img
-          src="https://www.svgrepo.com/show/475656/google-color.svg"
-          alt="Google"
-          className="w-5 h-5"
-        />
-        Continue with Google
-      </button>
-              </Button>
+              <div
+                onClick={handleGoogleAuth}
+                className="w-full bg-white border border-gray-300 text-black font-semibold py-2 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <img
+                  src="https://www.svgrepo.com/show/475656/google-color.svg"
+                  alt="Google"
+                  className="w-5 h-5"
+                />
+                Continue with Google
+              </div>
             </div>
 
             <p className="text-center text-sm text-muted-foreground animate-fadeIn" style={{ animationDelay: '0.65s' }}>

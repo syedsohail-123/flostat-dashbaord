@@ -42,8 +42,8 @@ const queryClient = new QueryClient();
 function AppShell() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
-   const [components, setComponents] = useState<string>("dashboard");
-   console.log("Component in app: ",components)
+  const [components, setComponents] = useState<string>("dashboard");
+  console.log("Component in app: ", components)
   const shelllessRoutes = [
     "/",
     "/signin",
@@ -59,9 +59,9 @@ function AppShell() {
       stopWebSocket();
     };
   }, []);
-  console.log("IS auth: ",isAuthenticated)
+  console.log("IS auth: ", isAuthenticated)
   // Redirect authenticated users from root path to dashboard, but allow access to signin/signup
-  if (isAuthenticated &&  location.pathname === "/") {
+  if (isAuthenticated && location.pathname === "/") {
     return <Navigate to="/organizations" replace />;
   }
 
@@ -69,7 +69,7 @@ function AppShell() {
   // if (!isAuthenticated && !shelllessRoutes.includes(location.pathname as any)) {
   //   return <Navigate to="/" replace />;
   // }
- 
+
 
   if (isShellless) {
     return (
@@ -79,7 +79,7 @@ function AppShell() {
             <Route path="/" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/complete-profile" element={<CompleteProfile/>}/>
+            <Route path="/complete-profile" element={<CompleteProfile />} />
             <Route path="/organizations" element={
               <PrivateRoute>
                 <Organizations />
@@ -103,15 +103,15 @@ function AppShell() {
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
               <Route path="org/:org_id">
-                  
-                  <Route index element={
-                    <PrivateRoute>
-                      <FlostatDashboard  components={components}/>
-                    </PrivateRoute>
-                    
-                    }/>
+
+                <Route index element={
+                  <PrivateRoute>
+                    <FlostatDashboard components={components} />
+                  </PrivateRoute>
+
+                } />
               </Route>
-             
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
@@ -128,7 +128,7 @@ const App = () => (
         <Provider store={store}>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <AppShell />
           </BrowserRouter>
         </Provider>

@@ -73,10 +73,10 @@ export default function Logs() {
     toast.info("Export logs functionality would be implemented here");
   };
 
-  const filteredLogs = logs.filter(log => 
-    log.device_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.updated_by.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.device_id.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLogs = (logs || []).filter(log => 
+    log.device_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.updated_by?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.device_id?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {

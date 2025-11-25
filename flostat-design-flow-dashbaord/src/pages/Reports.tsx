@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   Select,
   SelectContent,
@@ -19,13 +18,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Download } from "lucide-react";
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { OrganizationSelector } from "@/components/OrganizationSelector";
 
 interface Report {
   id: string;
@@ -37,34 +35,16 @@ interface Report {
   updatedBy: string;
 }
 
-
-
 interface TankDevice {
   device_id: string;
   device_name: string;
   device_type: string;
+  org_id: string;
+  org_name: string;
 }
 
-const reports = [
-  { id: "092ab42a-7190-4c79-a08a-9ce182a75fa1", deviceType: "Pump", status: "ON", level: null, lastUpdated: "11/10/2025, 10:20:30 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "092ab42a-7190-4c79-a08a-9ce182a75fa1", deviceType: "Pump", status: "OFF", level: null, lastUpdated: "11/10/2025, 10:19:29 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "092ab42a-7190-4c79-a08a-9ce182a75fa1", deviceType: "Pump", status: "ON", level: null, lastUpdated: "11/10/2025, 8:37:24 PM", updatedBy: "ahmedsyedsonal176@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:20:15 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:20:15 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "75%", lastUpdated: "11/8/2025, 3:20:10 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "75%", lastUpdated: "11/8/2025, 3:20:10 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "78%", lastUpdated: "11/8/2025, 3:20:03 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "78%", lastUpdated: "11/8/2025, 3:20:03 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "1e0514a2-38b1-4e50-adc4-6eb05b445bf9", deviceType: "Pump", status: "OFF", level: null, lastUpdated: "11/8/2025, 3:19:06 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "80%", lastUpdated: "11/8/2025, 3:19:06 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "80%", lastUpdated: "11/8/2025, 3:19:06 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:19:00 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "70%", lastUpdated: "11/8/2025, 3:19:00 PM", updatedBy: "hrnh6531@gmail.com" },
-  { id: "9d3f2c6a-5452-4910-a59e-d4ecd15c66ba", deviceType: "Tank", status: null, level: "60%", lastUpdated: "11/8/2025, 3:18:53 PM", updatedBy: "hrnh6531@gmail.com" },
-];
-
 export default function Reports() {
-  const { authToken, currentOrganization, organizations } = useAuth();
+  const { authToken, organizations } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
   const [tankDevices, setTankDevices] = useState<TankDevice[]>([]);
@@ -72,99 +52,53 @@ export default function Reports() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterDeviceType, setFilterDeviceType] = useState("all");
 
-  const dummyEmails = [
-    "admin@gmail.com", "hardware@gmail.com", "chopdeharshit@gmail.com",
-    "dashboard@gmail.com", "harshitchopde025@gmail.com", "hrhit6581@gmail.com",
-    "ahmedsyedsohail776@gmail.com", "kadamakanksha3814@gmail.com",
-    "souvikghoshofficial19@gmail.com", "anik.panja2804@gmail.com",
-    "majaykumar7@gmail.com"
-  ];
-
-  const getRandomEmail = () => dummyEmails[Math.floor(Math.random() * dummyEmails.length)];
-
-  const generateDummyLogs = (date: string, tankId: string) => {
-    const logs = [];
-
-    // Generate data for the full 24 hours
-    for (let i = 0; i <= 23; i++) {
-      const hour = i.toString().padStart(2, '0');
-
-      // Tank Level Log
-      logs.push({
-        uuid: `dummy-level-${date}-${hour}`,
-        device_id: tankId,
-        device_type: "Tank",
-        current_level: Math.floor(Math.random() * (90 - 40) + 40), // Random level between 40 and 90
-        last_updated: `${date}T${hour}:00:00`,
-        updated_by: getRandomEmail()
-      });
-
-      // Pump Status Log (randomly ON/OFF)
-      if (Math.random() > 0.5) {
-        logs.push({
-          uuid: `dummy-pump-${date}-${hour}`,
-          device_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-          device_type: "Pump",
-          status: Math.random() > 0.5 ? "ON" : "OFF",
-          last_updated: `${date}T${hour}:30:00`,
-          updated_by: getRandomEmail()
-        });
-      }
-
-      // Valve Status Log (randomly ON/OFF)
-      if (Math.random() > 0.5) {
-        logs.push({
-          uuid: `dummy-valve-${date}-${hour}`,
-          device_id: "b2c3d4e5-f678-9012-3456-7890abcdef12",
-          device_type: "Valve",
-          status: Math.random() > 0.5 ? "ON" : "OFF",
-          last_updated: `${date}T${hour}:15:00`,
-          updated_by: getRandomEmail()
-        });
-      }
-
-      // Sump Level Log
-      logs.push({
-        uuid: `dummy-sump-${date}-${hour}`,
-        device_id: "c3d4e5f6-7890-1234-5678-90abcdef1234",
-        device_type: "Sump",
-        current_level: Math.floor(Math.random() * (60 - 20) + 20), // Random level between 20 and 60
-        last_updated: `${date}T${hour}:45:00`,
-        updated_by: getRandomEmail()
-      });
-    }
-    return logs;
-  };
-
-  // Fetch tank devices when organization changes
+  // Fetch tank devices from ALL organizations
   useEffect(() => {
-    if (authToken && currentOrganization) {
-      fetchTankDevices();
+    if (authToken && organizations && organizations.length > 0) {
+      fetchAllTankDevices();
     }
-  }, [authToken, currentOrganization]);
+  }, [authToken, organizations]);
 
-  const fetchTankDevices = async () => {
+  const fetchAllTankDevices = async () => {
     try {
-      if (!authToken || !currentOrganization) return;
+      if (!authToken || !organizations) return;
 
       apiService.setAuthToken(authToken);
 
-      const response = await apiService.getDevices(currentOrganization.org_id);
+      const allTanks: TankDevice[] = [];
 
-      if (response.success && response.devices) {
-        const tanks = response.devices.filter((device: any) =>
-          device.device_type === 'tank'
-        );
-        setTankDevices(tanks);
+      // Iterate through all organizations to fetch their devices
+      for (const org of organizations) {
+        try {
+          const response = await apiService.getDevices(org.org_id);
 
-        if (tanks.length > 0 && (!selectedTank || selectedTank === "no-tanks")) {
-          setSelectedTank(tanks[0].device_id);
-        } else if (tanks.length === 0) {
-          setSelectedTank("no-tanks");
+          if (response.success && response.devices) {
+            const orgTanks = response.devices
+              .filter((device: any) => device.device_type === 'tank')
+              .map((tank: any) => ({
+                ...tank,
+                org_id: org.org_id,
+                org_name: org.name
+              }));
+
+            allTanks.push(...orgTanks);
+          }
+        } catch (err) {
+          console.error(`Failed to fetch devices for org ${org.name}:`, err);
+          // Continue to next org even if one fails
         }
       }
+
+      setTankDevices(allTanks);
+
+      if (allTanks.length > 0 && (!selectedTank || selectedTank === "no-tanks")) {
+        setSelectedTank(allTanks[0].device_id);
+      } else if (allTanks.length === 0) {
+        setSelectedTank("no-tanks");
+      }
+
     } catch (error) {
-      console.error("Fetch tank devices error:", error);
+      console.error("Fetch all tank devices error:", error);
       toast.error("Failed to fetch tank devices");
     }
   };
@@ -181,14 +115,6 @@ export default function Reports() {
         return;
       }
 
-      if (!currentOrganization) {
-        toast.error("Organization required", {
-          description: "Please select an organization to view reports.",
-        });
-        setReports([]);
-        return;
-      }
-
       if (!selectedTank || selectedTank === "no-tanks") {
         toast.error("Tank selection required", {
           description: "Please select a tank to view reports.",
@@ -197,10 +123,20 @@ export default function Reports() {
         return;
       }
 
+      // Find the selected tank to get its org_id
+      const selectedTankObj = tankDevices.find(t => t.device_id === selectedTank);
+
+      if (!selectedTankObj) {
+        toast.error("Invalid tank selection", {
+          description: "Selected tank not found in available devices.",
+        });
+        return;
+      }
+
       apiService.setAuthToken(authToken);
 
       const params = {
-        org_id: currentOrganization.org_id,
+        org_id: selectedTankObj.org_id, // Use the org_id from the selected tank
         date: selectedDate || new Date().toISOString().split('T')[0],
         tank_id: selectedTank
       };
@@ -231,24 +167,6 @@ export default function Reports() {
         ...(response.Items || [])
       ];
 
-      // Check if date is within the dummy data range (Nov 5 - Nov 21, 2025)
-      // AND exclude Nov 14
-      const checkDate = new Date(params.date);
-      const startDate = new Date('2025-11-05');
-      const endDate = new Date('2025-11-21');
-      const excludeDate = new Date('2025-11-14');
-
-      // Normalize times to compare dates only
-      checkDate.setHours(0, 0, 0, 0);
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(0, 0, 0, 0);
-      excludeDate.setHours(0, 0, 0, 0);
-
-      if (checkDate >= startDate && checkDate <= endDate && checkDate.getTime() !== excludeDate.getTime()) {
-        console.log("Generating dummy data for:", params.date);
-        const dummyLogs = generateDummyLogs(params.date, params.tank_id);
-        connectedLogs.push(...dummyLogs);
-      }
 
       // Remove duplicates based on ID if necessary (optional but good practice)
       // Remove duplicates based on UUID or create a composite key for uniqueness
@@ -315,10 +233,6 @@ export default function Reports() {
 
   const handleFetchData = async () => {
     await fetchReports();
-  };
-
-  const handleDownloadPDF = async () => {
-    toast.info("Download PDF functionality would be implemented here");
   };
 
   const levelSeries = useMemo(() => {
@@ -419,42 +333,40 @@ export default function Reports() {
     <div className="space-y-6 animate-fadeIn">
       <h1 className="text-3xl font-bold tracking-tight text-soft text-center">Reports</h1>
 
-      {authToken && organizations && organizations.length > 1 && (
-        <div className="p-4 rounded-md border bg-muted/30">
-          <div className="font-medium mb-2">Select Organization</div>
-          <div className="max-w-xs">
-            <OrganizationSelector />
-          </div>
-          {currentOrganization && (
-            <div className="mt-2 text-sm text-muted-foreground">
-              Currently viewing reports for: <span className="font-medium">{currentOrganization.name}</span>
-            </div>
-          )}
-        </div>
-      )}
 
       <div className="flex items-end justify-between gap-3">
         <div className="flex items-end gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-soft-muted">Select Tank</label>
             <Select value={selectedTank} onValueChange={setSelectedTank}>
-              <SelectTrigger className="w-[160px] h-9">
+              <SelectTrigger className="w-[200px] h-9">
                 <SelectValue placeholder="Select Tank">
-                  {selectedTank
-                    ? tankDevices.find(t => t.device_id === selectedTank)?.device_name || selectedTank
+                  {selectedTank && selectedTank !== "no-tanks"
+                    ? (() => {
+                      const tank = tankDevices.find(t => t.device_id === selectedTank);
+                      return tank ? `${tank.device_name} (${tank.org_name})` : selectedTank;
+                    })()
                     : "Select Tank"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="tank-1">Tank 1</SelectItem>
-                <SelectItem value="tank-2">Tank 2</SelectItem>
-                <SelectItem value="tank-3">Tank 3</SelectItem>
+                {tankDevices.length > 0 ? (
+                  tankDevices.map((tank) => (
+                    <SelectItem key={tank.device_id} value={tank.device_id}>
+                      {tank.device_name} <span className="text-muted-foreground text-xs">({tank.org_name})</span>
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-tanks" disabled>No tanks found</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
+
           <div className="flex flex-col gap-1">
             <label className="text-xs text-soft-muted">Select Date</label>
             <Input
+              type="date"
               placeholder="mm/dd/yyyy"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
