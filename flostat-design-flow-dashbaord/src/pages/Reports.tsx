@@ -235,6 +235,63 @@ export default function Reports() {
     await fetchReports();
   };
 
+  const handleDownloadPDF = async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default;
+      const autoTable = (await import('jspdf-autotable')).default;
+
+      const doc = new jsPDF();
+
+      const selectedTankObj = tankDevices.find(t => t.device_id === selectedTank);
+      const tankName = selectedTankObj ? `${selectedTankObj.device_name} (${selectedTankObj.org_name})` : 'Unknown Tank';
+
+      doc.setFontSize(18);
+      doc.text('Device Reports', 14, 20);
+
+      doc.setFontSize(11);
+      doc.text(`Tank: ${tankName}`, 14, 30);
+      doc.text(`Date: ${selectedDate}`, 14, 37);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 44);
+      doc.text(`Total Records: ${filteredReports.length}`, 14, 51);
+
+      const tableData = filteredReports.map(report => [
+        report.id.substring(0, 20) + '...',
+        report.deviceType,
+        report.status || report.level || '-',
+        report.lastUpdated,
+        report.updatedBy
+      ]);
+
+      autoTable(doc, {
+        startY: 58,
+        head: [['Device ID', 'Type', 'Status/Level', 'Last Updated', 'Updated By']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 150, 136], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 8, cellPadding: 3 },
+        columnStyles: {
+          0: { cellWidth: 35 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 25 },
+          3: { cellWidth: 40 },
+          4: { cellWidth: 40 }
+        }
+      });
+
+      const fileName = `report_${tankName.replace(/[^a-z0-9]/gi, '_')}_${selectedDate}.pdf`;
+      doc.save(fileName);
+
+      toast.success('PDF downloaded successfully', {
+        description: `${filteredReports.length} records exported`
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to generate PDF', {
+        description: error.message || 'Please try again'
+      });
+    }
+  };
+
   const levelSeries = useMemo(() => {
     const chartData: Record<string, any> = {};
 
@@ -409,7 +466,7 @@ export default function Reports() {
             )}
           </Button>
         </div>
-        <Button className="h-9 gap-2 bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-hover))] text-white"><Download className="h-4 w-4" /> Download PDF</Button>
+        <Button className="h-9 gap-2 bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-hover))] text-white" onClick={handleDownloadPDF}><Download className="h-4 w-4" /> Download PDF</Button>
       </div>
 
       <div className="rounded-lg border border-border/50 bg-card shadow-soft-lg animate-slideUp">

@@ -40,9 +40,9 @@ export default function Logs() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const dispatch = useDispatch();
-  const token = useSelector((state: RootState)=> state.auth.token);
-  const devicesObject = useSelector((state: RootState)=> state.device.devicesObject);
-  const {org_id,logs} = useSelector((state: RootState)=> state.org);
+  const token = useSelector((state: RootState) => state.auth.token);
+  const devicesObject = useSelector((state: RootState) => state.device.devicesObject);
+  const { org_id, logs } = useSelector((state: RootState) => state.org);
   useEffect(() => {
     fetchLogs();
   }, []);
@@ -53,11 +53,11 @@ export default function Logs() {
       const data = {
         org_id
       }
-      const result = await logsOrgTopics(data,token)
+      const result = await logsOrgTopics(data, token)
 
-      console.log("Result log: ",logs,result);
-      if(result){
-         dispatch(setLogs(result));
+      console.log("Result log: ", logs, result);
+      if (result) {
+        dispatch(setLogs(result));
       }
     } catch (error) {
       toast.error("Failed to fetch logs");
@@ -73,7 +73,7 @@ export default function Logs() {
     toast.info("Export logs functionality would be implemented here");
   };
 
-  const filteredLogs = (logs || []).filter(log => 
+  const filteredLogs = (logs || []).filter(log =>
     log.device_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.updated_by?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.device_id?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -88,20 +88,25 @@ export default function Logs() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-1">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">System Logs</h1>
-          <p className="text-muted-foreground mt-1">Monitor and review system events</p>
+          <h1 className="text-2xl font-bold tracking-tight">Logs</h1>
+          <p className="text-muted-foreground">
+            View and analyze system logs and events
+          </p>
         </div>
-        <Button variant="aqua" className="gap-2" onClick={handleExportLogs}>
-          <Download className="h-4 w-4" />
-          <LogsExportDropdown data={logs}/>
-        </Button>
+        <div className="flex items-center gap-2">
+          <LogsExportDropdown data={filteredLogs} />
+          <Button onClick={handleExportLogs} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col gap-4 md:flex-row">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search logs..."
@@ -118,45 +123,45 @@ export default function Logs() {
           <Filter className="h-4 w-4" />
           Filters
         </Button>
-      </div>
+      </div >
 
-      <div className="rounded-lg border bg-card shadow-elevation-2">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="font-semibold">Device</TableHead>
-              <TableHead className="font-semibold">Log ID</TableHead>
-              <TableHead className="font-semibold">Timestamp</TableHead>
-              <TableHead className="font-semibold">Level</TableHead>
-              <TableHead className="font-semibold">Event</TableHead>
-              <TableHead className="font-semibold">User</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredLogs.map((log) => (
-              <TableRow key={log.id} className="hover:bg-muted/30">
-                <TableCell>
-                  <span className="rounded-md bg-secondary/20 px-2 py-1 text-xs font-medium">
-                    {devicesObject[log.device_id] || log.device_id}
-                  </span>
-                </TableCell>
-                <TableCell className="font-mono text-sm">{log.uuid}</TableCell>
-                <TableCell className="text-sm text-muted-foreground font-mono">
-                  {log.last_updated}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={logLevelColors[log.status]}>
-                    {log.status?.toUpperCase()}
-                  </Badge>
-                </TableCell>
-                
-                <TableCell className="font-medium">{log.event || "Event"}</TableCell>
-                <TableCell className="text-muted-foreground">{log.updated_by}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+  <div className="rounded-lg border bg-card shadow-elevation-2">
+    <Table>
+      <TableHeader>
+        <TableRow className="bg-muted/50">
+          <TableHead className="font-semibold">Device</TableHead>
+          <TableHead className="font-semibold">Log ID</TableHead>
+          <TableHead className="font-semibold">Timestamp</TableHead>
+          <TableHead className="font-semibold">Level</TableHead>
+          <TableHead className="font-semibold">Event</TableHead>
+          <TableHead className="font-semibold">User</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {filteredLogs.map((log) => (
+          <TableRow key={log.uuid || log.id || `log-${Math.random()}`} className="hover:bg-muted/30">
+            <TableCell>
+              <span className="rounded-md bg-secondary/20 px-2 py-1 text-xs font-medium">
+                {devicesObject[log.device_id] || log.device_id}
+              </span>
+            </TableCell>
+            <TableCell className="font-mono text-sm">{log.uuid}</TableCell>
+            <TableCell className="text-sm text-muted-foreground font-mono">
+              {log.last_updated}
+            </TableCell>
+            <TableCell>
+              <Badge variant="outline" className={logLevelColors[log.status]}>
+                {log.status?.toUpperCase()}
+              </Badge>
+            </TableCell>
+
+            <TableCell className="font-medium">{log.event || "Event"}</TableCell>
+            <TableCell className="text-muted-foreground">{log.updated_by}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+    </div >
   );
 }
