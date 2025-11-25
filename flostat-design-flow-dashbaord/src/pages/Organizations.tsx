@@ -87,6 +87,24 @@ const dispatch = useDispatch();
       console.error("Create organization error:", error);
     }
   };
+  console.log("ORG BOARD")
+  
+  const handleUserInteraction = async () => {
+  // ask permission only once
+  if (Notification.permission !== "default") return;
+
+  const permission = await Notification.requestPermission();
+  if (permission === "granted") {
+    await getFcmToken();
+  }
+
+  window.removeEventListener("click", handleUserInteraction);
+};
+
+useEffect(() => {
+  window.addEventListener("click", handleUserInteraction);
+}, []);
+
    useEffect(()=>{
     const tokenFetchAndRegister = async()=>{
       const fcmToken = await getFcmToken();

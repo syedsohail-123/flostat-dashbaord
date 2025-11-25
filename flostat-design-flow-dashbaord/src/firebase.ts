@@ -26,10 +26,14 @@ const messaging = getMessaging(app);
 // Get FCM token
 export const getFcmToken = async (): Promise<string | null> => {
   try {
+
     const permission = await Notification.requestPermission();
+    console.log("get  fcm token")
+    console.log("vapid key: ",import.meta.env.VITE_APP_VAPID_KEY);
     if (permission === "granted") {
       const token = await getToken(messaging, {
-        vapidKey: import.meta.env.VITE_REACT_APP_VAPID_KEY,
+        vapidKey: import.meta.env.VITE_APP_VAPID_KEY,
+        serviceWorkerRegistration: await navigator.serviceWorker.register("/firebase-messaging-sw.js"),
       });
       console.log("FCM Token:", token);
       return token || null;
@@ -48,6 +52,10 @@ export const onMessageListener = (): Promise<MessagePayload> =>
   new Promise((resolve) => {
     onMessage(messaging, (payload) => {
       console.log("Message received in foreground:", payload);
+  //   new Notification(payload.notification.title, {
+  //   body: payload.notification.body,
+  //   icon: payload.notification.icon,
+  // });
       resolve(payload);
     });
   });
