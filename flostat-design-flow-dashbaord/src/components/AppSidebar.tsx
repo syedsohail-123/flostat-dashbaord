@@ -9,7 +9,8 @@ import {
   Activity,
   Settings as SettingsIcon,
   LogOut,
-  Headset
+  Headset,
+  ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -34,7 +35,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ components, setComponents }: AppSidebarProps) {
   const { open } = useSidebar();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -46,6 +47,10 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
       toast.error("Failed to sign out");
       console.error("Sign out error:", error);
     }
+  };
+
+  const handleBackToOrganizations = () => {
+    navigate("/organizations");
   };
 
   const navigationItems = [
@@ -63,16 +68,27 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="border-b border-sidebar-border px-4 py-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary">
-            <Activity className="h-6 w-6 text-sidebar-primary-foreground" />
-          </div>
-          {open && (
-            <div>
-              <h1 className="text-xl font-bold text-sidebar-foreground">Flostat</h1>
-              <p className="text-xs text-sidebar-foreground/70">Industrial IoT Platform</p>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary">
+              <Activity className="h-6 w-6 text-sidebar-primary-foreground" />
             </div>
-          )}
+            {open && (
+              <div>
+                <h1 className="text-xl font-bold text-sidebar-foreground">Flostat</h1>
+                <p className="text-xs text-sidebar-foreground/70">Industrial IoT Platform</p>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleBackToOrganizations}
+            className="flex items-center gap-2 rounded-md border border-sidebar-border/60 px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {open && <span>Back to Organizations</span>}
+          </button>
         </div>
       </SidebarHeader>
 
@@ -101,11 +117,22 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
 
         <div className="mt-auto p-3 border-t border-sidebar-border space-y-2">
           <div className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/80">
-            <div className="h-8 w-8 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center font-semibold">FG</div>
+            <div className="h-8 w-8 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center font-semibold">
+              {(user?.name || user?.email || "User")
+                .split(" ")
+                .map((word) => word[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
             {open && (
               <div className="flex-1">
-                <div className="text-sm font-medium">Souvik Ghosh</div>
-                <div className="text-xs text-sidebar-foreground/70">Admin</div>
+                <div className="text-sm font-medium truncate">
+                  {user?.name || user?.email || "User"}
+                </div>
+                <div className="text-xs text-sidebar-foreground/70">
+                  {user?.email || "Logged in"}
+                </div>
               </div>
             )}
           </div>

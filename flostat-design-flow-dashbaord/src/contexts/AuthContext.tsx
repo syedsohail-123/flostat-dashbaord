@@ -79,9 +79,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check if user is already logged in (e.g., from localStorage)
-    const unparsedToken = localStorage.getItem('authToken') ||  localStorage.getItem('flostatToken');
+    const rawToken =
+      localStorage.getItem('authToken') || localStorage.getItem('flostatToken');
     const userData = localStorage.getItem('user');
-    const token = JSON.parse(unparsedToken);
+
+    let token: string | null = null;
+    if (rawToken) {
+      try {
+        token = JSON.parse(rawToken);
+      } catch {
+        token = rawToken; // Token was stored as a plain string (non-JSON)
+      }
+    }
     console.log("AuthContext: Initializing with stored data:", { token: !!token, userData: !!userData });
 
     if (token ) {

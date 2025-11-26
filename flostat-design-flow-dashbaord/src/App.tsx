@@ -36,14 +36,16 @@ import { store } from "./store.ts";
 import FlostatDashboard from "./pages/FlostatDashboard.tsx";
 import PrivateRoute from "./components/auth/ProtectedRoute.tsx";
 import CompleteProfile from "./pages/CompleteProfile.tsx";
+import { useIsMobile } from "./hooks/use-mobile";
 
 const queryClient = new QueryClient();
 
 function AppShell() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
-   const [components, setComponents] = useState<string>("dashboard");
-   console.log("Component in app: ",components)
+  const { isAuthenticated, currentOrganization } = useAuth();
+  const isMobile = useIsMobile();
+  const [components, setComponents] = useState<string>("dashboard");
+  console.log("Component in app: ", components)
   const shelllessRoutes = [
     "/",
     "/signin",
@@ -59,9 +61,9 @@ function AppShell() {
       stopWebSocket();
     };
   }, []);
-  console.log("IS auth: ",isAuthenticated)
+  console.log("IS auth: ", isAuthenticated)
   // Redirect authenticated users from root path to dashboard, but allow access to signin/signup
-  if (isAuthenticated &&  location.pathname === "/") {
+  if (isAuthenticated && location.pathname === "/") {
     return <Navigate to="/organizations" replace />;
   }
 
@@ -69,7 +71,7 @@ function AppShell() {
   // if (!isAuthenticated && !shelllessRoutes.includes(location.pathname as any)) {
   //   return <Navigate to="/" replace />;
   // }
- 
+
 
   if (isShellless) {
     return (
@@ -79,7 +81,7 @@ function AppShell() {
             <Route path="/" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/complete-profile" element={<CompleteProfile/>}/>
+            <Route path="/complete-profile" element={<CompleteProfile />} />
             <Route path="/organizations" element={
               <PrivateRoute>
                 <Organizations />
@@ -97,21 +99,26 @@ function AppShell() {
         <AppSidebar components={components} setComponents={setComponents} />
         <div className="flex-1 flex flex-col">
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
-            <SidebarTrigger />
+            <div className="flex items-center gap-3">
+              {isMobile && <SidebarTrigger />}
+              <span className="text-base font-semibold text-foreground">
+                {currentOrganization?.name ?? "Flostat"}
+              </span>
+            </div>
             <div className="flex-1" />
           </header>
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
               <Route path="org/:org_id">
-                  
-                  <Route index element={
-                    <PrivateRoute>
-                      <FlostatDashboard  components={components}/>
-                    </PrivateRoute>
-                    
-                    }/>
+
+                <Route index element={
+                  <PrivateRoute>
+                    <FlostatDashboard components={components} />
+                  </PrivateRoute>
+
+                } />
               </Route>
-             
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

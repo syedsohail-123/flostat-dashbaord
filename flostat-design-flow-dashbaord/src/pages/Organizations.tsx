@@ -15,21 +15,23 @@ import { setOrgId } from "@/slice/orgSlice";
 import { roleStatus, USER_DEVICE } from "@/utils/constants";
 import { getFcmToken } from "@/firebase";
 import { apiService } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 export default function Organizations() {
   const [open, setOpen] = useState(false);
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [loc, setLoc] = useState("");
   const navigate = useNavigate();
-  const token = useSelector((state: RootState)=>state.auth.token);
-  const userOrgs = useSelector((state: RootState)=>state.user.userOrgs);
-  console.log("User org in redux: ",userOrgs);
+  const { setCurrentOrganization } = useAuth();
+  const token = useSelector((state: RootState) => state.auth.token);
+  const userOrgs = useSelector((state: RootState) => state.user.userOrgs);
+  console.log("User org in redux: ", userOrgs);
   useEffect(() => {
-    if(token){
+    if (token) {
       fetchOrganizations();
     }
   }, [token]);
@@ -38,7 +40,7 @@ const dispatch = useDispatch();
     try {
       setLoading(true);
       const result = await getAllOrgsOfUser(token);
-      console.log("Orgs of the user: ",result);
+      console.log("Orgs of the user: ", result);
       if (result) {
         dispatch(setUserOrgs(result));
       }
@@ -65,18 +67,18 @@ const dispatch = useDispatch();
 
       // Call the API service to create organization
       const response = await apiService.createOrganization(orgData);
-      
+
       if (response.success) {
         toast.success("Organization created successfully");
-        
+
         // Close the dialog
         setOpen(false);
-        
+
         // Reset form
         setName("");
         setDesc("");
         setLoc("");
-        
+
         // Fetch updated organizations
         await fetchOrganizations();
       } else {
@@ -88,60 +90,65 @@ const dispatch = useDispatch();
     }
   };
   console.log("ORG BOARD")
-  
+
   const handleUserInteraction = async () => {
-  // ask permission only once
-  if (Notification.permission !== "default") return;
+    // ask permission only once
+    if (Notification.permission !== "default") return;
 
-  const permission = await Notification.requestPermission();
-  if (permission === "granted") {
-    await getFcmToken();
-  }
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      await getFcmToken();
+    }
 
-  window.removeEventListener("click", handleUserInteraction);
-};
+    window.removeEventListener("click", handleUserInteraction);
+  };
 
-useEffect(() => {
-  window.addEventListener("click", handleUserInteraction);
-}, []);
+  useEffect(() => {
+    window.addEventListener("click", handleUserInteraction);
+  }, []);
 
-   useEffect(()=>{
-    const tokenFetchAndRegister = async()=>{
+  useEffect(() => {
+    const tokenFetchAndRegister = async () => {
       const fcmToken = await getFcmToken();
-      console.log("FCM TOKEN: ",fcmToken);
-      if(fcmToken){
-         toast.success("Token Fetch successfull");
-         // call for registerFCM
-         const data = {
-          fcm_token:fcmToken,
-          user_device:USER_DEVICE.LAPTOP
-         }
-        const result = await registerFcm(data,token);
-        if(result){
+      console.log("FCM TOKEN: ", fcmToken);
+      if (fcmToken) {
+        toast.success("Token Fetch successfull");
+        // call for registerFCM
+        const data = {
+          fcm_token: fcmToken,
+          user_device: USER_DEVICE.LAPTOP
+        }
+        const result = await registerFcm(data, token);
+        if (result) {
           console.log("Register fcm done.")
         }
-        
-      }else{
+
+      } else {
         toast.error("Error in fetching FCM token");
-        console.error("Error in fetching token: ",fcmToken);
+        console.error("Error in fetching token: ", fcmToken);
       }
     }
     tokenFetchAndRegister();
-  },[]);
-    const handleSelectOrg = async (org)=>{
-    console.log(" org: ",org);
-    if(org.status === roleStatus.PENDING){
+  }, []);
+  const handleSelectOrg = async (org) => {
+    console.log(" org: ", org);
+    if (org.status === roleStatus.PENDING) {
       // handle accepte
-      const result = await acceptInvite(org.org_id,token);
-      console.log("RES: ",result);
-      if(result){
+      const result = await acceptInvite(org.org_id, token);
+      console.log("RES: ", result);
+      if (result) {
         dispatch(setUserOrgs(result));
       }
 
-    }else if (org.status === roleStatus.ACTIVE){
+    } else if (org.status === roleStatus.ACTIVE) {
       dispatch(setOrgId(org.org_id))
+      setCurrentOrganization({
+        org_id: org.org_id,
+        name: org.orgName || org.name || "Organization",
+        role: org.role || "",
+      });
       navigate(`/org/${org.org_id}`)
-    }else{
+    } else {
       toast.error("Account is deactivated or not responding!")
     }
   }
@@ -185,8 +192,8 @@ useEffect(() => {
               {o.role && <p className="text-sm text-soft-muted">Your Role: {o.role}</p>}
               {o.status && <p className="text-xs text-soft-muted">Status: {o.status}</p>}
               <Button className="mt-2 w-full bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white" onClick={() => handleSelectOrg(o)}>
-              {o.status===roleStatus.PENDING && <div className="">Accept invite</div> }
-              {o.status===roleStatus.ACTIVE && <div className="">Enter Dashboard</div> }
+                {o.status === roleStatus.PENDING && <div className="">Accept invite</div>}
+                {o.status === roleStatus.ACTIVE && <div className="">Enter Dashboard</div>}
               </Button>
             </CardContent>
           </Card>
@@ -201,32 +208,32 @@ useEffect(() => {
           <div className="space-y-3">
             <div>
               <label className="text-xs text-soft-muted">Organization Name</label>
-              <Input 
-                placeholder="Enter org name" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
+              <Input
+                placeholder="Enter org name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div>
               <label className="text-xs text-soft-muted">Description</label>
-              <Textarea 
-                placeholder="Enter description" 
-                value={desc} 
-                onChange={(e) => setDesc(e.target.value)} 
+              <Textarea
+                placeholder="Enter description"
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
               />
             </div>
             <div>
               <label className="text-xs text-soft-muted">Location</label>
-              <Input 
-                placeholder="Enter location" 
-                value={loc} 
-                onChange={(e) => setLoc(e.target.value)} 
+              <Input
+                placeholder="Enter location"
+                value={loc}
+                onChange={(e) => setLoc(e.target.value)}
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button 
-                onClick={onCreate} 
+              <Button
+                onClick={onCreate}
                 className="bg-[hsl(var(--aqua))] hover:bg-[hsl(var(--aqua))]/90 text-white"
                 disabled={!name.trim()}
               >
