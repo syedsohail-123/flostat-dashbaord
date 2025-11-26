@@ -66,7 +66,7 @@ export default function Logs() {
       setLoading(false);
     }
   };
-
+//  console.log("Logs: ",logs)
   const handleExportLogs = async () => {
     // In a real implementation, this would call the backend API to export logs
 
@@ -147,15 +147,17 @@ export default function Logs() {
             </TableCell>
             <TableCell className="font-mono text-sm">{log.uuid}</TableCell>
             <TableCell className="text-sm text-muted-foreground font-mono">
-              {log.last_updated}
+              {new Date(
+                          log.last_updated 
+                        ).toLocaleString() || log.updated_at}
             </TableCell>
             <TableCell>
               <Badge variant="outline" className={logLevelColors[log.status]}>
-                {log.status?.toUpperCase()}
+                {log.status?.toUpperCase() || log?.current_level}
               </Badge>
             </TableCell>
 
-            <TableCell className="font-medium">{log.event || "Event"}</TableCell>
+            <TableCell className="font-medium">{log?.event_type || "Event"}</TableCell>
             <TableCell className="text-muted-foreground">{log.updated_by}</TableCell>
           </TableRow>
         ))}

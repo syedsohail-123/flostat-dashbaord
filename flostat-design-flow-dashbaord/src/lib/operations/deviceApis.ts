@@ -1,8 +1,9 @@
 // src/services/deviceCrudService.ts
-import toast from "react-hot-toast";
+
 import { apiClient } from "../httpClient";
 import { deviceEndpoints } from "../endPoints";
 import { Device } from "@/components/types/types";
+import { toast } from "sonner";
 
 const {
   DEVICE_CREATE,
