@@ -148,8 +148,8 @@ export default function Logs() {
             <TableCell className="font-mono text-sm">{log.uuid}</TableCell>
             <TableCell className="text-sm text-muted-foreground font-mono">
               {new Date(
-                          log.last_updated || log.updated_at
-                        ).toLocaleString()}
+                          log.last_updated 
+                        ).toLocaleString() || log.updated_at}
             </TableCell>
             <TableCell>
               <Badge variant="outline" className={logLevelColors[log.status]}>
