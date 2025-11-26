@@ -52,10 +52,10 @@ export const onMessageListener = (): Promise<MessagePayload> =>
   new Promise((resolve) => {
     onMessage(messaging, (payload) => {
       console.log("Message received in foreground:", payload);
-  //   new Notification(payload.notification.title, {
-  //   body: payload.notification.body,
-  //   icon: payload.notification.icon,
-  // });
+    new Notification(payload.notification.title, {
+    body: payload.notification.body,
+    icon: payload.notification.icon,
+  });
       resolve(payload);
     });
   });

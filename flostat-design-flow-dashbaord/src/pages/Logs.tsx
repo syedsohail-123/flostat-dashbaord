@@ -155,7 +155,7 @@ export default function Logs() {
               </Badge>
             </TableCell>
 
-            <TableCell className="font-medium">{log.event || "Event"}</TableCell>
+            <TableCell className="font-medium">{log?.event_type || "Event"}</TableCell>
             <TableCell className="text-muted-foreground">{log.updated_by}</TableCell>
           </TableRow>
         ))}

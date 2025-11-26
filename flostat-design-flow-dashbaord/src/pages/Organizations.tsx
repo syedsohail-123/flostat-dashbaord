@@ -58,8 +58,8 @@ const dispatch = useDispatch();
 
     try {
       const orgData = {
-        name,
-        description: desc,
+        orgName:name,
+        orgDesc: desc,
         location: loc
       };
 

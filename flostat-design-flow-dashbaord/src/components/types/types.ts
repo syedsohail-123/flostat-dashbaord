@@ -55,7 +55,11 @@ export interface ThresholdPayload {
   max_threshold?: number;
 }
 
-
+export interface OrgData {
+  orgName: string;
+  orgDesc?: string;
+  location?: string;
+}
 
 
 export interface GoogleOuthResponse {
