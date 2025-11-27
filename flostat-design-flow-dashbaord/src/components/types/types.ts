@@ -61,7 +61,11 @@ export interface OrgData {
   orgDesc?: string;
   location?: string;
 }
-
+export interface BlockModePayload {
+  block_id: string;
+  org_id: string;
+  mode: string;
+}
 
 export interface GoogleOuthResponse {
   user?: any;
