@@ -42,6 +42,7 @@ export interface Log {
   status: string;
   last_updated?: string;
   updated_at?: string;
+  timestamp?: string;
   org_id: string;
   device_id: string;
 updated_by: string;

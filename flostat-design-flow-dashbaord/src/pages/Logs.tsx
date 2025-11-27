@@ -27,14 +27,7 @@ const logLevelColors = {
   success: "bg-success/10 text-success border-success/20",
 };
 
-interface Log {
-  id: string;
-  timestamp: string;
-  level: "info" | "warning" | "error" | "success";
-  device: string;
-  event: string;
-  user: string;
-}
+
 
 export default function Logs() {
   const [loading, setLoading] = useState(true);
@@ -76,7 +69,8 @@ export default function Logs() {
   const filteredLogs = logs.filter(log => 
     log.device_type?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
     log.updated_by?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
-    log.device_id?.toLowerCase().includes(searchTerm?.toLowerCase())
+    log.device_id?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+    log?.event_type?.toLowerCase().includes(searchTerm?.toLowerCase())
   );
 
   if (loading) {
@@ -142,12 +136,14 @@ export default function Logs() {
           <TableRow key={log.uuid || log.id || `log-${Math.random()}`} className="hover:bg-muted/30">
             <TableCell>
               <span className="rounded-md bg-secondary/20 px-2 py-1 text-xs font-medium">
-                {devicesObject[log.device_id] || log.device_id}
+                {log?.device_name || devicesObject[log.device_id] || log.device_id}
+                {log?.email}
+                {/* {log?.device_name} */}
               </span>
             </TableCell>
             <TableCell className="font-mono text-sm">{log.uuid}</TableCell>
             <TableCell className="text-sm text-muted-foreground font-mono">
-              {new Date(
+              { new Date( log?.timestamp || 
                           log.last_updated 
                         ).toLocaleString() || log.updated_at}
             </TableCell>
