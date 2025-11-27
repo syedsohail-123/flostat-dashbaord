@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check if user is already logged in (e.g., from localStorage)
-    const unparsedToken = localStorage.getItem('authToken') || localStorage.getItem('flostatToken');
+    const unparsedToken =  localStorage.getItem('flostatToken');
     const userData = localStorage.getItem('user');
     const token = JSON.parse(unparsedToken);
     console.log("AuthContext: Initializing with stored data:", { token: !!token, userData: !!userData });
@@ -180,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(true);
 
         // Save to localStorage
-        localStorage.setItem('authToken', token);
+        localStorage.setItem('flostatToken', JSON.stringify(token));
         localStorage.setItem('user', JSON.stringify(userObj));
 
         // Set the token in the API service for future requests
@@ -277,7 +277,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthToken(null);
     setOrganizations([]);
     setCurrentOrganization(null);
-    localStorage.removeItem('authToken');
+    console.log("Log out run")
+    localStorage.removeItem('flostatToken');
     localStorage.removeItem('user');
     localStorage.removeItem('currentOrganization');
     apiService.setAuthToken(null);

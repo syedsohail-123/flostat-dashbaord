@@ -32,11 +32,12 @@ import {
   subscribe,
 } from "./utils/webSocketService.ts";
 import { Provider } from "react-redux";
-import { store } from "./store.ts";
+import { RootState, store } from "./store.ts";
 import FlostatDashboard from "./pages/FlostatDashboard.tsx";
 import PrivateRoute from "./components/auth/ProtectedRoute.tsx";
 import CompleteProfile from "./pages/CompleteProfile.tsx";
 import { useIsMobile } from "./hooks/use-mobile";
+import { useSelector } from "react-redux";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,8 @@ function AppShell() {
   const isMobile = useIsMobile();
   const [components, setComponents] = useState<string>("dashboard");
   console.log("Component in app: ", components)
+  const { topics} = useSelector((state: RootState)=> state.org);
+  console.log("Topics : ",topics)
   const shelllessRoutes = [
     "/",
     "/signin",

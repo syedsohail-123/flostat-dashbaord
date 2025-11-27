@@ -19,7 +19,7 @@ const initialState: AuthState = {
   token: localStorage.getItem("flostatToken")
     ? JSON.parse(localStorage.getItem("flostatToken") as string)
     : null,
-  user: null,
+  user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null,
   signUpData: null,
   loading: false,
 };
@@ -49,6 +49,9 @@ const authSlice = createSlice({
     },
 
     logOut: (state) => {
+      localStorage.removeItem("flostatToken");
+      localStorage.removeItem("user");
+      localStorage.removeItem("currentOrganization");
       state.token = null;
       state.user = null;
       state.signUpData = null;

@@ -12,7 +12,7 @@ interface WebSocketState {
   disconnectEvents: DisconnectEvent[];
   devices: any[];
   deviceStatus: Record<string, any>;
-  topics: string[];
+  
   error: string | null;
 }
 
@@ -22,7 +22,7 @@ const initialState: WebSocketState = {
   disconnectEvents: [],
   devices: [],
   deviceStatus: {},
-  topics: [],
+ 
   error: null,
 };
 
@@ -42,9 +42,7 @@ const webSocketSlice = createSlice({
       state.disconnectEvents.unshift(action.payload);
     },
 
-    setTopics: (state, action: PayloadAction<string[]>) => {
-      state.topics = action.payload;
-    },
+  
 
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
@@ -66,7 +64,7 @@ const webSocketSlice = createSlice({
       state.disconnectEvents = [];
       state.devices = [];
       state.deviceStatus = {};
-      state.topics = [];
+     
       state.error = null;
     },
   },
@@ -80,7 +78,6 @@ export const {
   resetWebSocket,
   setDevices,
   setDevicesStatus,
-  setTopics,
 } = webSocketSlice.actions;
 
 export default webSocketSlice.reducer;

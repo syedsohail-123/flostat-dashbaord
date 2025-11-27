@@ -178,7 +178,13 @@ export const googleOuth = (
       if (res.data.state === "login") {
         console.log("Login state: ",res.data)
         if (res.data.token) {
-
+          const userData = res.data?.user;
+          const userObj = {
+          id: userData?.id || userData?.email, // Use server-provided ID if available
+          email: userData?.email,
+          name: `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() || 'User'
+        };
+          localStorage.setItem('user', JSON.stringify(userObj));
           dispatch(setToken(res.data.token));
           localStorage.setItem("flostatToken", JSON.stringify(res.data.token));
           console.log("Now navigate to org")

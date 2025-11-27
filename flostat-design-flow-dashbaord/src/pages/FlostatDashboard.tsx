@@ -13,10 +13,11 @@ import SCADA from "./SCADA";
 import { useDispatch, useSelector } from "react-redux";
 import { getOrgTopics } from "@/lib/operations/orgApis";
 import { RootState } from "@/store";
-import { setTopics } from "@/slice/webSocketSlice";
+
 import { toast } from "sonner";
 import CustomerService from "./CustomerSupport";
 import Settings from "./Settings";
+import { setTopics } from "@/slice/orgSlice";
 
 
 const FlostatDashboard = ({ components }) => {
