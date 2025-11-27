@@ -27,6 +27,9 @@ import {
 } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store";
+import { resetCurrentOrg } from "@/slice/orgSlice";
 
 interface AppSidebarProps {
   components: string;
@@ -37,7 +40,7 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
   const { open } = useSidebar();
   const { logout, user } = useAuth();
   const navigate = useNavigate();
-
+  const dispatch = useDispatch<AppDispatch>();
   const handleSignOut = async () => {
     try {
       logout();
@@ -50,6 +53,7 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
   };
 
   const handleBackToOrganizations = () => {
+    dispatch(resetCurrentOrg());
     navigate("/organizations");
   };
 

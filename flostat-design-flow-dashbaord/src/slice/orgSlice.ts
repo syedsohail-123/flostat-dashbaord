@@ -8,7 +8,7 @@ interface OrgState {
   blockModes: Record<string, string>;
   blocksName: Record<string, string>;
   blocks: any[];
-
+  topics: string[];
   currentBlock: any;
   logs: any[];
 }
@@ -18,6 +18,7 @@ const initialState: OrgState = {
   org_id: null,
   blockModes: {},
   blocksName:{},
+  topics:[],
   blocks: [],
   currentBlock: null,
   logs: [],
@@ -54,9 +55,23 @@ const orgSlice = createSlice({
     setCurrentBlock: (state, action: PayloadAction<any>) => {
       state.currentBlock = action.payload;
     },
+      setTopics: (state, action: PayloadAction<string[]>) => {
+      state.topics = action.payload;
+    },
     setBlocks: (state, action: PayloadAction<any[]>) => {
       state.blocks = action.payload;
     },
+    resetCurrentOrg:(state) =>{
+        state.orgUsers=null;
+        state.org_id= null;
+        state.blockModes= {};
+        state.blocksName={};
+        state.topics=[];
+        state.blocks=[];
+        state.currentBlock= null;
+        state.logs= [];
+        localStorage.removeItem('currentOrganization');
+    }
   },
 });
 
@@ -64,10 +79,12 @@ export const {
   setOrgId,
   setLogs,
   addLog,
+  setTopics,
   setOrgUsers,
   setBlockMode,
   setBlocksName,
   setCurrentBlock,
+  resetCurrentOrg,
   setBlocks,
 } = orgSlice.actions;
 

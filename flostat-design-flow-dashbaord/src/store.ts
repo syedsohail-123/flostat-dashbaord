@@ -2,12 +2,12 @@
 import { configureStore, createListenerMiddleware } from "@reduxjs/toolkit";
 
 import authReducer from "./slice/authSlice";
-import orgReducer from "./slice/orgSlice";
+import orgReducer, { resetCurrentOrg, setTopics } from "./slice/orgSlice";
 import userReducer from "./slice/userSlice";
 import deviceReducer from "./slice/deviceSlice";
 import scheduleReducer from "./slice/scheduleSlice";
-import webSocketReducer, { setTopics } from "./slice/webSocketSlice";
-import { subscribe } from "./utils/webSocketService";
+import webSocketReducer from "./slice/webSocketSlice";
+import { subscribe, unsubscribeAll } from "./utils/webSocketService";
 
 const listenerMiddleware = createListenerMiddleware();
 
@@ -20,6 +20,14 @@ listenerMiddleware.startListening({
     action.payload.forEach((topic: string) => {
       subscribe(topic);
     });
+  },
+});
+
+listenerMiddleware.startListening({
+  actionCreator: resetCurrentOrg,
+  effect: async (action) => {
+    console.log("All unsubscribe:", action.payload);
+    unsubscribeAll(); 
   },
 });
 

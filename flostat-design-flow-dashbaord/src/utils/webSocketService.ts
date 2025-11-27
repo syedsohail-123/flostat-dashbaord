@@ -104,7 +104,8 @@ export function subscribeInBatch(topics: Set<string>, batchSize = 5) {
 
 export function unsubscribe(topic: string) {
   subscribedTopics.delete(topic);
-  if (client?.connected) client.unsubscribe(topic);
+  console.log("Unsubscribe all");
+  if (client?.connected) client.unsubscribe(topic); 
 }
 
 export function unsubscribeAll() {
