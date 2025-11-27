@@ -81,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check if user is already logged in (e.g., from localStorage)
     const unparsedToken =  localStorage.getItem('flostatToken');
     const userData = localStorage.getItem('user');
+    const token = JSON.parse(unparsedToken);
     console.log("AuthContext: Initializing with stored data:", { token: !!token, userData: !!userData });
 
     if (token) {
