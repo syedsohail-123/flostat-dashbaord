@@ -208,6 +208,48 @@ class ApiService {
 
     return response.json();
   }
+
+  // SCADA endpoints
+  async getSCADAData(orgId: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/api/v1/device/scada/${orgId}`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch SCADA data');
+    }
+
+    return response.json();
+  }
+
+  async updateDeviceState(deviceId: string, orgId: string, isOn: boolean): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/api/v1/device/scada/updateState`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ device_id: deviceId, org_id: orgId, isOn }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update device state');
+    }
+
+    return response.json();
+  }
+
+  async updateSCADAMode(orgId: string, mode: 'auto' | 'manual'): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/api/v1/device/scada/mode`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ org_id: orgId, mode }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update SCADA mode');
+    }
+
+    return response.json();
+  }
 }
 
 export const apiService = new ApiService();
