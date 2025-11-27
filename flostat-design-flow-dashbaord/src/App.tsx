@@ -36,12 +36,14 @@ import { store } from "./store.ts";
 import FlostatDashboard from "./pages/FlostatDashboard.tsx";
 import PrivateRoute from "./components/auth/ProtectedRoute.tsx";
 import CompleteProfile from "./pages/CompleteProfile.tsx";
+import { useIsMobile } from "./hooks/use-mobile";
 
 const queryClient = new QueryClient();
 
 function AppShell() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentOrganization } = useAuth();
+  const isMobile = useIsMobile();
   const [components, setComponents] = useState<string>("dashboard");
   console.log("Component in app: ", components)
   const shelllessRoutes = [
@@ -97,7 +99,12 @@ function AppShell() {
         <AppSidebar components={components} setComponents={setComponents} />
         <div className="flex-1 flex flex-col">
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
-            <SidebarTrigger />
+            <div className="flex items-center gap-3">
+              {isMobile && <SidebarTrigger />}
+              <span className="text-base font-semibold text-foreground">
+                {currentOrganization?.name ?? "Flostat"}
+              </span>
+            </div>
             <div className="flex-1" />
           </header>
           <main className="flex-1 p-6 overflow-auto">
@@ -128,7 +135,7 @@ const App = () => (
         <Provider store={store}>
           <Toaster />
           <Sonner />
-          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <BrowserRouter>
             <AppShell />
           </BrowserRouter>
         </Provider>

@@ -41,9 +41,9 @@ export default function Devices() {
   const [modalMode, setModalMode] = useState<"qr" | "update" | "remove">("qr");
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
 
-  const org_id = useSelector((state: RootState) => state.org.org_id);
+  const {org_id,blocksName} = useSelector((state: RootState) => state.org);
   const token = useSelector((state: RootState) => state.auth.token);
-  const devices = useSelector((state: RootState) => state.device.devices);
+  const {devices} = useSelector((state: RootState) => state.device);
   const dispatch = useDispatch();
 
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -64,20 +64,16 @@ export default function Devices() {
   };
 
   const handleCreateDevice = async () => {
-    if (!selectedDeviceType) {
+       if (!selectedDeviceType) {
       alert("Please select a device type");
-      return;
-    }
-    if (!selectedBlockId) {
-      alert("Please select a block");
       return;
     }
 
     const data = {
       org_id,
-      device_type: selectedDeviceType,
-      block_id: selectedBlockId
+      device_type: selectedDeviceType
     };
+    console.log("data create device:",data)
 
     const result = await deviceCreate(data, token);
     if (result) {
@@ -169,27 +165,7 @@ export default function Devices() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Block Selection */}
-            <div>
-              <label className="text-sm font-medium text-center block mb-2">
-                Select Block
-              </label>
-              <Select
-                value={selectedBlockId}
-                onValueChange={setSelectedBlockId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a block" />
-                </SelectTrigger>
-                <SelectContent>
-                  {blocks.map((block) => (
-                    <SelectItem key={block.block_id} value={block.block_id!}>
-                      {block.block_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
 
             {/* Device Type */}
             <div>
@@ -263,7 +239,7 @@ export default function Devices() {
                 </TableCell>
                 <TableCell>
                   <span className="text-xs font-medium px-2 py-1 rounded-md bg-[hsl(var(--navy))] text-white shadow-soft-sm">
-                    {device?.block_id}
+                    {blocksName[device?.block_id]}
                   </span>
                 </TableCell>
                 <TableCell>

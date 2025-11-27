@@ -1,3 +1,5 @@
+import { OrgData } from "@/components/types/types";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
 
 interface LoginCredentials {
@@ -15,11 +17,7 @@ interface SignUpData {
   conformPassword?: string;
 }
 
-interface OrgData {
-  name: string;
-  description?: string;
-  location?: string;
-}
+
 
 interface CreateDeviceData {
   name: string;

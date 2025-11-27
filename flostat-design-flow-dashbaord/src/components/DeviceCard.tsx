@@ -172,11 +172,11 @@ export const DeviceCard = ({ device }: DeviceCardProps) => {
               </span>
 
               {/* UI Switch */}
-              {/* <Switch
+              <Switch
                 checked={isOn}
                 onCheckedChange={(state) => handleDeviceUpdate(device,state)}
                 aria-label={nextActionLabel}
-              /> */}
+              />
             </div>
           )}
           
