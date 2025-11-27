@@ -2,16 +2,13 @@
 import toast from "react-hot-toast";
 import { deviceEndpoints } from "../endPoints";
 import { apiClient } from "../httpClient";
-import { Block } from "@/components/types/types";
+import { Block, BlockModePayload } from "@/components/types/types";
 
 
 // ------------------ TYPES ------------------
 
 
-export interface BlockModePayload {
-  block_id: string;
-  mode: string;
-}
+
 
 export interface UpdateBlockThresholdPayload {
   block_id: string;

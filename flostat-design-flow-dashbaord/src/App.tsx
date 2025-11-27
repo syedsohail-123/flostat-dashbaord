@@ -46,9 +46,9 @@ function AppShell() {
   const { isAuthenticated, currentOrganization } = useAuth();
   const isMobile = useIsMobile();
   const [components, setComponents] = useState<string>("dashboard");
-  console.log("Component in app: ", components)
+  // console.log("Component in app: ", components)
   const { topics} = useSelector((state: RootState)=> state.org);
-  console.log("Topics : ",topics)
+  // console.log("Topics : ",topics)
   const shelllessRoutes = [
     "/",
     "/signin",
