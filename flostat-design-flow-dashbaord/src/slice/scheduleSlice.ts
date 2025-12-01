@@ -83,7 +83,7 @@ const scheduleSlice = createSlice({
       if (ack) {
         if (device_type === "valve") schedule.valve_ack = true;
         if (device_type === "pump") schedule.pump_ack = true;
-
+        
         schedule.schedule_status = schedule_status;
 
         if (schedule.pump_ack && schedule.valve_ack) {

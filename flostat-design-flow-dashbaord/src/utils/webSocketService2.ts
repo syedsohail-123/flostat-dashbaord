@@ -1,11 +1,27 @@
 // websocket.ts
 import mqtt, { MqttClient } from "mqtt";
-import { AWS_REGION, BASE_RECONNECT_MS, DEFAULT_TOPICS, IDENTITY_POOL, KEEPALIVE_SEC, MAX_RECONNECT_MS, REFRESH_COOLDOWN_MS } from "./constants";
+import {
+  AWS_REGION,
+  BASE_RECONNECT_MS,
+  DEFAULT_TOPICS,
+  IDENTITY_POOL,
+  KEEPALIVE_SEC,
+  MAX_RECONNECT_MS,
+  REFRESH_COOLDOWN_MS,
+} from "./constants";
 import { store } from "@/store";
-import { addDisconnectEvent, setError, setStatus } from "@/slice/webSocketSlice";
+import {
+  addDisconnectEvent,
+  setError,
+  setStatus,
+} from "@/slice/webSocketSlice";
 import { addLog, setBlockMode } from "@/slice/orgSlice";
 import { updateDeviceStatus, updateDevicethreshold } from "@/slice/deviceSlice";
-import { ackScheduleCreate, ackScheduleDelete, ackScheduleUpdate } from "@/slice/scheduleSlice";
+import {
+  ackScheduleCreate,
+  ackScheduleDelete,
+  ackScheduleUpdate,
+} from "@/slice/scheduleSlice";
 
 // AWS SDK v3 imports
 import { CognitoIdentityClient } from "@aws-sdk/client-cognito-identity";
@@ -105,7 +121,7 @@ export function subscribeInBatch(topics: Set<string>, batchSize = 5) {
 export function unsubscribe(topic: string) {
   subscribedTopics.delete(topic);
   console.log("Unsubscribe all");
-  if (client?.connected) client.unsubscribe(topic); 
+  if (client?.connected) client.unsubscribe(topic);
 }
 
 export function unsubscribeAll() {
@@ -119,6 +135,7 @@ export function unsubscribeAll() {
 
 // --- V3 AWS: Get Cognito Credentials ---
 async function getAwsCredentials(): Promise<Credentials> {
+  console.log("getAwsCredentials");
   const credsProvider = fromCognitoIdentityPool({
     client: new CognitoIdentityClient({ region: AWS_REGION }),
     identityPoolId: IDENTITY_POOL,
@@ -132,25 +149,27 @@ async function connectInitial() {
   store.dispatch(setStatus("connecting"));
 
   try {
-   
-    openMqttWithCurrentCreds();
+    await openMqttWithCurrentCreds();
   } catch (err: any) {
     console.error("Cognito Error:", err);
     store.dispatch(setError(`Cognito Error: ${err.message}`));
-    scheduleReconnect();
+    await scheduleReconnect();
   }
 }
 
-
 // --- Open MQTT with given URL ---
 async function openMqttWithCurrentCreds() {
-     const creds = await getAwsCredentials();
-    if (!creds || !creds.accessKeyId) {
+  console.log("openMqttWithCurrentCreds");
+  const creds = await getAwsCredentials();
+  console.log("AWS CREAD: ", creds);
+  if (!creds || !creds.accessKeyId) {
+    console.error("MISSING AWS CRED", creds);
     store.dispatch(setError("Missing AWS credentials"));
-    scheduleReconnect();
+    await scheduleReconnect();
     return;
   }
-    const url = await createSignedUrl(creds);
+  const url = await createSignedUrl(creds);
+  console.log("Url connect mqtt: ", url);
   client = mqtt.connect(url, {
     clientId: `mqtt-client-${Math.floor(Math.random() * 1e9)}`,
     keepalive: KEEPALIVE_SEC,
@@ -163,6 +182,7 @@ async function openMqttWithCurrentCreds() {
 
 // ---- Rest of your code stays the same ----
 function wireClientEvents() {
+  console.log("wireClientEvents");
   if (!client) return;
 
   client.on("connect", () => {
@@ -206,17 +226,20 @@ function wireClientEvents() {
           break;
 
         case "SCHEDULE_ACK_DELETE":
-           console.log("Schedule del ack");
+          console.log("Schedule del ack");
           store.dispatch(ackScheduleDelete(msg.data));
           break;
 
         case "SCHEDULE_ACK_UPDATE":
-           console.log("Schedule update ack");
+          console.log("Schedule update ack");
           store.dispatch(ackScheduleUpdate(msg.data));
           break;
 
         case "UPDATE_THRESHOLD":
           store.dispatch(updateDevicethreshold(msg.data));
+          break;
+        case "CONNECT_DISCONNECT_UPDATE":
+          store.dispatch(updateDeviceStatus(msg.data));
           break;
       }
     } catch (err) {
@@ -224,19 +247,19 @@ function wireClientEvents() {
     }
   });
 
-  client.on("error", (err: any) => {
+  client.on("error", async (err: any) => {
     console.error("MQTT Error:", err.message);
 
     if (String(err.message).includes("403")) {
-      credentialRefreshAndReconnect("403");
+      await credentialRefreshAndReconnect("403");
       return;
     }
 
-    scheduleReconnect();
+    await scheduleReconnect();
   });
 
-  client.on("close", () => {
-    console.log("Disconnected, forcedClose:", forcedClose);
+  client.on("close", async () => {
+    console.warn("Disconnected, forcedClose:", forcedClose);
 
     if (forcedClose) return;
 
@@ -248,11 +271,12 @@ function wireClientEvents() {
       return;
     }
 
-    scheduleReconnect();
+    await scheduleReconnect();
   });
 }
 
 function safeEndClient() {
+  console.warn("safeEndClient");
   try {
     client?.removeAllListeners();
     client?.end(true);
@@ -264,13 +288,15 @@ function safeEndClient() {
 let reconnectTimer: NodeJS.Timeout | null = null;
 
 function clearReconnectTimer() {
+  console.warn("clearReconnectTimer");
   if (reconnectTimer) {
     clearTimeout(reconnectTimer);
     reconnectTimer = null;
   }
 }
 
-function scheduleReconnect() {
+async function scheduleReconnect() {
+  console.warn("Schedule reconnect ");
   if (forcedClose) return;
 
   clearReconnectTimer();
@@ -278,42 +304,76 @@ function scheduleReconnect() {
   const delay = nextBackoffMs();
   reconnectAttempts++;
 
-  console.warn(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`);
+  console.warn(`🔁 Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`);
 
-  reconnectTimer = setTimeout(() => {
+  reconnectTimer = setTimeout(async () => {
     clearReconnectTimer();
 
     if (!navigator.onLine) return;
 
     safeEndClient();
 
-    scheduleReconnect(); // v3: credentials refresh handled in connectInitial
+    try {
+      // Get current Cognito creds (AWS SDK v3)
+      const creds = await getAwsCredentials();
+      const now = Date.now();
+
+      const expireAt = creds.expiration?.getTime?.() || 0;
+      const msLeft = expireAt - now;
+
+      const credsExist = !!creds.accessKeyId;
+      const credsExpiredSoon = credsExist && msLeft < 60_000; // less than 1 min
+
+      console.warn("🪪 Credential status:", {
+        credsExist,
+        credsExpiredSoon,
+        msLeft,
+      });
+
+      if (!credsExist || credsExpiredSoon) {
+        console.warn(
+          "🔄 Credentials missing/near expiry → refresh & reconnect"
+        );
+        await credentialRefreshAndReconnect("expire cred");
+        return; // Reconnect will happen inside refresh function
+      }
+
+      console.warn("🔁 Credentials OK → reconnect with existing creds");
+      await openMqttWithCurrentCreds();
+    } catch (err) {
+      console.error("❌ Error checking credentials:", err);
+
+      // fallback → force refresh and reconnect
+      await credentialRefreshAndReconnect("expire cred");
+    }
   }, delay);
 }
 
 // ---- Credential Refresh ----
-function credentialRefreshAndReconnect(reason = "unknown") {
+async function credentialRefreshAndReconnect(reason = "unknown") {
+   console.warn("creds refresh for aws resion ",reason);
   if (refreshInProgress) return;
 
   const now = Date.now();
   if (now - lastRefreshAt < REFRESH_COOLDOWN_MS) {
-    scheduleReconnect();
+    await scheduleReconnect();
     return;
   }
 
   refreshInProgress = true;
-  getAwsCredentials()
-    .then((creds) => {
+  await getAwsCredentials()
+    .then(async (creds) => {
       lastRefreshAt = Date.now();
       refreshInProgress = false;
-
+      clearReconnectTimer();
       safeEndClient();
-      connectInitial();
+      // connectInitial();
+      await openMqttWithCurrentCreds();
     })
-    .catch((err) => {
+    .catch(async (err) => {
       refreshInProgress = false;
       store.dispatch(setError(`Credential Refresh Failed: ${err.message}`));
-      scheduleReconnect();
+      await scheduleReconnect();
     });
 }
 
