@@ -7,7 +7,7 @@ import userReducer from "./slice/userSlice";
 import deviceReducer from "./slice/deviceSlice";
 import scheduleReducer from "./slice/scheduleSlice";
 import webSocketReducer from "./slice/webSocketSlice";
-import { subscribe, unsubscribeAll } from "./utils/webSocketService";
+import { subscribe, unsubscribeAll } from "./utils/webSocketService2";
 
 const listenerMiddleware = createListenerMiddleware();
 

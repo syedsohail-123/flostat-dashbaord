@@ -38,8 +38,8 @@ export const DeleteScheduleModal = ({
         console.log("RES: ",res);
 
         if(res){
-        dispatch(scheduleDelete(schedule.schedule_id));
-        toast.success("Schedule removed successfully!");
+        // dispatch(scheduleDelete(schedule.schedule_id));
+        // toast.success("Schedule removed successfully!");
         }
        
         onOpenChange(false);

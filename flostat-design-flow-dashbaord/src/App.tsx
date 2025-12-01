@@ -30,7 +30,7 @@ import {
   startWebSocket,
   stopWebSocket,
   subscribe,
-} from "./utils/webSocketService.ts";
+} from "./utils/webSocketService2.ts";
 import { Provider } from "react-redux";
 import { RootState, store } from "./store.ts";
 import FlostatDashboard from "./pages/FlostatDashboard.tsx";
