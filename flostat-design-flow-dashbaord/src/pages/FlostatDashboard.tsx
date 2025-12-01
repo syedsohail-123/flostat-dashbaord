@@ -36,9 +36,6 @@ const FlostatDashboard = ({ components }) => {
     }
     if (org_id && token) {
       fetchTopicsOfOrg(org_id);
-    } else {
-      console.error("Missing: ", token, org_id)
-      toast.error("Missing params like org_id or token ");
     }
   }, [org_id])
   return (

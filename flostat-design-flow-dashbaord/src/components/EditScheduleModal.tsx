@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSelector, useDispatch } from "react-redux";
+import { Clock, Edit, Trash2 } from "lucide-react";
 
 import { RootState } from "@/store";
 import {
@@ -22,12 +23,16 @@ interface EditScheduleModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     schedule: Schedule;
+    onCreateNew?: (blockId: string) => void;
+    onDelete?: () => void;
 }
 
 export const EditScheduleModal = ({
     open,
     onOpenChange,
     schedule,
+    onCreateNew,
+    onDelete,
 }: EditScheduleModalProps) => {
     const { token } = useSelector((state: RootState) => state.auth);
     const dispatch = useDispatch();
@@ -85,14 +90,19 @@ export const EditScheduleModal = ({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="grid grid-cols-2 gap-8 py-4">
                     {/* 🔹 Time pickers */}
                     <div className="space-y-2">
-                        <Label htmlFor="start_time">Start Time</Label>
+                        <Label htmlFor="start_time" className="flex items-center gap-2">
+                            <Clock className="h-5 w-5 text-blue-600" />
+                            Start Time
+                        </Label>
                         <Input
                             id="start_time"
                             name="start_time"
                             type="time"
+                            min="00:00"
+                            max="23:59"
                             value={getTimeValue(form.start_time)}
                             onChange={handleChange}
                             className="w-full"
@@ -101,11 +111,16 @@ export const EditScheduleModal = ({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="end_time">End Time</Label>
+                        <Label htmlFor="end_time" className="flex items-center gap-2">
+                            <Clock className="h-5 w-5 text-blue-600" />
+                            End Time
+                        </Label>
                         <Input
                             id="end_time"
                             name="end_time"
                             type="time"
+                            min="00:00"
+                            max="23:59"
                             value={getTimeValue(form.end_time)}
                             onChange={handleChange}
                             className="w-full"
@@ -121,7 +136,23 @@ export const EditScheduleModal = ({
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
-                    <Button onClick={handleUpdate}>Update Schedule</Button>
+                    {onDelete && (
+                        <Button
+                            variant="destructive"
+                            className="gap-2"
+                            onClick={() => {
+                                onOpenChange(false);
+                                onDelete();
+                            }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                        </Button>
+                    )}
+                    <Button className="bg-black hover:bg-black/90 text-white gap-2" onClick={handleUpdate}>
+                        <Edit className="h-4 w-4" />
+                        Update
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

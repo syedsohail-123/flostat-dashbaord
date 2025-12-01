@@ -31,6 +31,7 @@ interface CreateScheduleModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     org_id: string;
+    defaultBlockId?: string;
 }
 
 interface ScheduleFormData {
@@ -46,6 +47,7 @@ export const CreateScheduleModal = ({
     open,
     onOpenChange,
     org_id,
+    defaultBlockId,
 }: CreateScheduleModalProps) => {
     const { token } = useSelector((state: RootState) => state.auth);
     const dispatch = useDispatch();
@@ -67,8 +69,12 @@ export const CreateScheduleModal = ({
     useEffect(() => {
         if (open && org_id && token) {
             fetchBlocks();
+            if (defaultBlockId) {
+                setForm(prev => ({ ...prev, block_id: defaultBlockId }));
+                handleBlockChange(defaultBlockId);
+            }
         }
-    }, [open, org_id, token]);
+    }, [open, org_id, token, defaultBlockId]);
 
     const fetchBlocks = async () => {
         try {
