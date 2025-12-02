@@ -74,13 +74,22 @@ export function AppSidebar({ components, setComponents }: AppSidebarProps) {
       <SidebarHeader className="border-b border-sidebar-border px-4 py-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary">
-              <Activity className="h-6 w-6 text-sidebar-primary-foreground" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white">
+              {/* <Activity className="h-6 w-6 text-sidebar-primary-foreground" /> */}
+              <img
+                src="/favicon-32x32.png"
+                alt="Sidebar Icon"
+                className="h-6 w-6 object-contain bg-white"
+              />
             </div>
             {open && (
               <div>
-                <h1 className="text-xl font-bold text-sidebar-foreground">Flostat</h1>
-                <p className="text-xs text-sidebar-foreground/70">Industrial IoT Platform</p>
+                <h1 className="text-xl font-bold text-sidebar-foreground">
+                  Flostat
+                </h1>
+                <p className="text-xs text-sidebar-foreground/70">
+                  Industrial IoT Platform
+                </p>
               </div>
             )}
           </div>
